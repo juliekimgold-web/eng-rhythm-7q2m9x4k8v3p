@@ -1,0 +1,23 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Platform generated files
+android/.gradle/
+android/local.properties
+ios/Pods/
+ios/.symlinks/
+
+# Local QA artifacts
+tmp/
+output/
