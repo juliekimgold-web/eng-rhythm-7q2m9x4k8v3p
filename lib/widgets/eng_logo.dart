@@ -10,40 +10,50 @@ class EngLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = onDark ? Colors.white : AppColors.orange;
+    final mark = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: compact ? 12 : 26,
+          height: compact ? 2.5 : 3.5,
+          color: Colors.white,
+        ),
+        Text(
+          'ENG',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: compact ? 21 : 36,
+            fontWeight: FontWeight.w900,
+            height: 0.9,
+            letterSpacing: compact ? -2.1 : -3.2,
+          ),
+        ),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: compact ? 18 : 28, height: 3, color: color),
-            Text(
-              'ENG',
-              style: TextStyle(
-                color: color,
-                fontSize: compact ? 22 : 30,
-                fontWeight: FontWeight.w900,
-                height: 0.9,
-                letterSpacing: -1.8,
-              ),
-            ),
-          ],
-        ),
-        if (!compact) ...[
-          const SizedBox(height: 5),
-          Text(
-            'Dashing towards better English',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: color.withValues(alpha: 0.82),
-              fontSize: 8,
-              fontWeight: FontWeight.w600,
-            ),
+        if (onDark)
+          mark
+        else
+          ShaderMask(
+            key: const ValueKey('eng-logo-gradient'),
+            blendMode: BlendMode.srcIn,
+            shaderCallback: (bounds) => const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Color(0x1AFFB982),
+                Color(0xFFFFA04C),
+                AppColors.orange,
+                Color(0xFFFF6467),
+              ],
+              stops: [0, 0.27, 0.62, 1],
+            ).createShader(bounds),
+            child: mark,
           ),
-        ],
       ],
     );
   }

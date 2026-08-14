@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
-import '../data/sample_data.dart';
 import '../models/rhythm_word.dart';
+import '../repositories/word_repository.dart';
 import '../widgets/eng_logo.dart';
 import '../widgets/section_header.dart';
 import '../widgets/sound_length_pattern.dart';
@@ -13,10 +13,14 @@ class HomeScreen extends StatelessWidget {
     super.key,
     required this.onStartCapture,
     required this.onOpenLibrary,
+    required this.onOpenProfile,
+    required this.repository,
   });
 
   final VoidCallback onStartCapture;
   final VoidCallback onOpenLibrary;
+  final VoidCallback onOpenProfile;
+  final WordRepository repository;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +31,7 @@ class HomeScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 96),
             sliver: SliverList.list(
               children: [
-                const _HomeHeader(),
+                _HomeHeader(onOpenProfile: onOpenProfile),
                 const SizedBox(height: 28),
                 _HeroCard(onStartCapture: onStartCapture),
                 const SizedBox(height: 18),
@@ -39,24 +43,33 @@ class HomeScreen extends StatelessWidget {
                   onAction: onOpenLibrary,
                 ),
                 const SizedBox(height: 12),
-                SizedBox(
-                  height: 178,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: 4,
-                    separatorBuilder: (_, __) => const SizedBox(width: 10),
-                    itemBuilder: (context, index) {
-                      final item = sampleWords[index];
-                      return _RecentWordCard(
-                        word: item,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => WordDetailScreen(word: item),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                AnimatedBuilder(
+                  animation: repository,
+                  builder: (context, _) {
+                    final recentWords = repository.recentWords.take(4).toList();
+                    return SizedBox(
+                      height: 178,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: recentWords.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        itemBuilder: (context, index) {
+                          final item = recentWords[index];
+                          return _RecentWordCard(
+                            word: item,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => WordDetailScreen(
+                                  word: item,
+                                  repository: repository,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 30),
                 const SectionHeader(title: '오늘의 리듬 노트'),
@@ -72,7 +85,9 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _HomeHeader extends StatelessWidget {
-  const _HomeHeader();
+  const _HomeHeader({required this.onOpenProfile});
+
+  final VoidCallback onOpenProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -88,20 +103,7 @@ class _HomeHeader extends StatelessWidget {
           },
         ),
         const SizedBox(width: 8),
-        Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AppColors.line),
-            borderRadius: BorderRadius.circular(AppRadii.control),
-          ),
-          child: const Text(
-            '준',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          ),
-        ),
+        _ProfileButton(onTap: onOpenProfile),
       ],
     );
   }
@@ -115,18 +117,126 @@ class _HeaderAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadii.control),
-      child: Ink(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: AppColors.line),
+    return Semantics(
+      button: true,
+      label: '읽지 않은 알림 2개',
+      child: Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.control),
         ),
-        child: Icon(icon, size: 20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(icon, size: 22),
+                Positioned(
+                  top: 7,
+                  right: 7,
+                  child: Container(
+                    width: 14,
+                    height: 14,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: AppColors.coral,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Text(
+                      '2',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileButton extends StatelessWidget {
+  const _ProfileButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: '김준희 프로필 열기',
+      child: Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.control),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(4, 4, 7, 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.peach, AppColors.coral],
+                    ),
+                  ),
+                  child: const Text(
+                    '준',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 7),
+                const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '김준희',
+                      style:
+                          TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                    ),
+                    SizedBox(height: 1),
+                    Text(
+                      '리듬 탐험가',
+                      style: TextStyle(color: AppColors.inkSoft, fontSize: 8),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 2),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: AppColors.inkSoft,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -167,7 +277,6 @@ class _HeroCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                border: Border.all(color: AppColors.line),
                 borderRadius: BorderRadius.circular(AppRadii.small),
               ),
               child: const SoundLengthPattern(
@@ -329,7 +438,6 @@ class _RecentWordCard extends StatelessWidget {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
-          side: BorderSide(color: word.color.withValues(alpha: 0.42)),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -382,7 +490,6 @@ class _TipCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF8F1),
-        border: Border.all(color: const Color(0xFFF1DED0)),
         borderRadius: BorderRadius.circular(AppRadii.card),
       ),
       child: const Row(

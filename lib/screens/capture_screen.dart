@@ -2,79 +2,86 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../controllers/capture_controller.dart';
 import '../core/theme/app_theme.dart';
-import '../data/sample_data.dart';
-import '../widgets/eng_logo.dart';
+import '../repositories/word_repository.dart';
 import '../widgets/icon_tile.dart';
 import '../widgets/sound_length_pattern.dart';
 import 'word_detail_screen.dart';
 
-enum CaptureStage { ready, listening, pattern, matching, result }
-
 class CaptureScreen extends StatefulWidget {
-  const CaptureScreen({super.key});
+  const CaptureScreen({super.key, required this.repository});
+
+  final WordRepository repository;
 
   @override
   State<CaptureScreen> createState() => _CaptureScreenState();
 }
 
 class _CaptureScreenState extends State<CaptureScreen> {
-  var _stage = CaptureStage.ready;
+  late final CaptureController _controller;
 
-  Future<void> _startCapture() async {
-    setState(() => _stage = CaptureStage.listening);
-    await Future<void>.delayed(const Duration(milliseconds: 1800));
-    if (!mounted || _stage != CaptureStage.listening) return;
-    await _finishCapture();
+  @override
+  void initState() {
+    super.initState();
+    _controller = CaptureController();
   }
 
-  Future<void> _finishCapture() async {
-    setState(() => _stage = CaptureStage.pattern);
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
-    if (!mounted || _stage != CaptureStage.pattern) return;
-    setState(() => _stage = CaptureStage.matching);
-    await Future<void>.delayed(const Duration(milliseconds: 1700));
-    if (!mounted || _stage != CaptureStage.matching) return;
-    setState(() => _stage = CaptureStage.result);
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
-
-  void _reset() => setState(() => _stage = CaptureStage.ready);
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-        child: Column(
-          children: [
-            const Row(
-              children: [
-                EngLogo(compact: true),
-                Spacer(),
-                _DevicePill(),
-              ],
-            ),
-            const SizedBox(height: 26),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 420),
-                child: switch (_stage) {
-                  CaptureStage.ready => _ReadyState(
-                      key: const ValueKey('ready'), onStart: _startCapture),
-                  CaptureStage.listening => _ListeningState(
-                      key: const ValueKey('listening'),
-                      onStop: _finishCapture,
-                    ),
-                  CaptureStage.pattern =>
-                    const _PatternState(key: ValueKey('pattern')),
-                  CaptureStage.matching =>
-                    const _MatchingState(key: ValueKey('matching')),
-                  CaptureStage.result => _ResultState(
-                      key: const ValueKey('result'), onReset: _reset),
-                },
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: '뒤로가기',
+                    icon: const Icon(Icons.arrow_back_rounded),
+                  ),
+                  const Spacer(),
+                  const _DevicePill(),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              Expanded(
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) => AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 420),
+                    child: switch (_controller.stage) {
+                      CaptureStage.ready => _ReadyState(
+                          key: const ValueKey('ready'),
+                          onStart: _controller.start,
+                        ),
+                      CaptureStage.listening => _ListeningState(
+                          key: const ValueKey('listening'),
+                          onStop: _controller.stop,
+                        ),
+                      CaptureStage.pattern =>
+                        const _PatternState(key: ValueKey('pattern')),
+                      CaptureStage.matching =>
+                        const _MatchingState(key: ValueKey('matching')),
+                      CaptureStage.result => _ResultState(
+                          key: const ValueKey('result'),
+                          onReset: _controller.reset,
+                          repository: widget.repository,
+                        ),
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -90,7 +97,6 @@ class _DevicePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.line),
         borderRadius: BorderRadius.circular(AppRadii.small),
       ),
       child: const Row(
@@ -112,53 +118,66 @@ class _ReadyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Spacer(),
-        Container(
-          width: 236,
-          height: 188,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AppColors.line),
-            borderRadius: BorderRadius.circular(AppRadii.card),
-          ),
-          child: Center(
-            child: Container(
-              width: 148,
-              height: 92,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2B2724),
-                borderRadius: BorderRadius.circular(46),
-                border: Border.all(color: AppColors.orange, width: 4),
-              ),
-              child: const Icon(
-                Icons.graphic_eq_rounded,
-                color: AppColors.orange,
-                size: 40,
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: IntrinsicHeight(
+            child: Column(
+              children: [
+                const Spacer(),
+                Container(
+                  width: 236,
+                  height: 188,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppRadii.card),
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 148,
+                      height: 92,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2B2724),
+                        borderRadius: BorderRadius.circular(46),
+                        border: Border.all(color: AppColors.orange, width: 4),
+                      ),
+                      child: const Icon(
+                        Icons.graphic_eq_rounded,
+                        color: AppColors.orange,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 36),
+                Text(
+                  '어떤 리듬을 발견할까요?',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  '주변의 반복되는 소리 가까이에\n디바이스를 놓아주세요.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.inkSoft, height: 1.5),
+                ),
+                const Spacer(),
+                FilledButton.icon(
+                  onPressed: onStart,
+                  icon: const Icon(Icons.graphic_eq_rounded),
+                  label: const Text('소리 감지 시작'),
+                ),
+                const SizedBox(height: 13),
+                const Text(
+                  '최대 10초 동안 소리를 분석해요',
+                  style: TextStyle(color: AppColors.inkSoft, fontSize: 12),
+                ),
+              ],
             ),
           ),
         ),
-        const SizedBox(height: 36),
-        Text('어떤 리듬을 발견할까요?',
-            style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 10),
-        const Text(
-          '주변의 반복되는 소리 가까이에\n디바이스를 놓아주세요.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.inkSoft, height: 1.5),
-        ),
-        const Spacer(),
-        FilledButton.icon(
-          onPressed: onStart,
-          icon: const Icon(Icons.graphic_eq_rounded),
-          label: const Text('소리 감지 시작'),
-        ),
-        const SizedBox(height: 13),
-        const Text('최대 10초 동안 소리를 분석해요',
-            style: TextStyle(color: AppColors.inkSoft, fontSize: 12)),
-      ],
+      ),
     );
   }
 }
@@ -264,7 +283,6 @@ class _PatternState extends StatelessWidget {
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: AppColors.line),
             borderRadius: BorderRadius.circular(AppRadii.card),
           ),
           child: const Column(
@@ -321,7 +339,6 @@ class _MatchingState extends StatelessWidget {
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: AppColors.line),
             borderRadius: BorderRadius.circular(AppRadii.card),
           ),
           child: const Column(
@@ -410,13 +427,18 @@ class _MatchedSyllable extends StatelessWidget {
 }
 
 class _ResultState extends StatelessWidget {
-  const _ResultState({super.key, required this.onReset});
+  const _ResultState({
+    super.key,
+    required this.onReset,
+    required this.repository,
+  });
 
   final VoidCallback onReset;
+  final WordRepository repository;
 
   @override
   Widget build(BuildContext context) {
-    final result = sampleWords.first;
+    final result = repository.recentWords.first;
     return ListView(
       padding: const EdgeInsets.only(top: 10),
       children: [
@@ -439,7 +461,6 @@ class _ResultState extends StatelessWidget {
           padding: const EdgeInsets.all(26),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: AppColors.line),
             borderRadius: BorderRadius.circular(AppRadii.card),
           ),
           child: Column(
@@ -502,7 +523,12 @@ class _ResultState extends StatelessWidget {
         const SizedBox(height: 18),
         FilledButton(
           onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => WordDetailScreen(word: result)),
+            MaterialPageRoute(
+              builder: (_) => WordDetailScreen(
+                word: result,
+                repository: repository,
+              ),
+            ),
           ),
           child: const Text('라이브러리에 저장하고 자세히 보기'),
         ),

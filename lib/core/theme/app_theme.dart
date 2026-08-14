@@ -11,7 +11,7 @@ abstract final class AppColors {
   static const surfaceMuted = Color(0xFFF0EEEB);
   static const ink = Color(0xFF282624);
   static const inkSoft = Color(0xFF6F6B67);
-  static const line = Color(0xFFE4E0DC);
+  static const line = Color(0xFFEDEAE6);
   static const lavender = Color(0xFFC78AF7);
   static const blue = Color(0xFF568AF7);
   static const yellow = Color(0xFFFFE75C);
@@ -88,7 +88,6 @@ abstract final class AppTheme {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
-          side: const BorderSide(color: AppColors.line),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(

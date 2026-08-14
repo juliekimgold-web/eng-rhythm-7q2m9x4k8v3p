@@ -1,659 +1,726 @@
-import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 
+import '../controllers/pronunciation_controller.dart';
 import '../core/theme/app_theme.dart';
 import '../models/rhythm_word.dart';
-import '../widgets/icon_tile.dart';
-import '../widgets/sound_length_pattern.dart';
+import '../repositories/word_repository.dart';
+import '../services/speech_service.dart';
+import '../widgets/word_rhythm_card.dart';
 
 class WordDetailScreen extends StatefulWidget {
-  const WordDetailScreen({super.key, required this.word});
+  const WordDetailScreen({
+    super.key,
+    required this.word,
+    required this.repository,
+    this.speechService,
+  });
 
   final RhythmWord word;
+  final WordRepository repository;
+  final SpeechService? speechService;
 
   @override
   State<WordDetailScreen> createState() => _WordDetailScreenState();
 }
 
 class _WordDetailScreenState extends State<WordDetailScreen> {
-  final _tts = FlutterTts();
-  var _playing = false;
-  var _ttsInitialized = false;
-  var _activeSyllable = -1;
+  late final PronunciationController _pronunciation;
+  late final PageController _pageController;
+  late final ScrollController _scrollController;
+  late int _currentIndex;
+  var _lastPage = 0.0;
+  var _pageDirection = 1;
   var _flipped = false;
-  var _playbackSpeed = 1.0;
+  var _rhythmRevealed = false;
   var _intensity = 0.72;
 
-  Future<void> _playRhythm() async {
-    if (_playing) return;
-    setState(() {
-      _playing = true;
-      _activeSyllable = 0;
-    });
-
-    try {
-      _ttsInitialized = true;
-      await _tts.setLanguage('en-US');
-      await _tts.setPitch(1.0);
-      await _tts.setVolume(1.0);
-      await _tts.setSpeechRate((0.42 * _playbackSpeed).clamp(0.28, 0.62));
-      await _tts.awaitSpeakCompletion(true);
-
-      final speech = _tts.speak(widget.word.word);
-      await _runSyllableHighlights();
-      await speech;
-    } catch (_) {
-      if (mounted && _activeSyllable == 0) {
-        await _runSyllableHighlights();
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _playing = false;
-          _activeSyllable = -1;
-        });
-      }
-    }
-  }
-
-  Future<void> _runSyllableHighlights() async {
-    final durations = widget.word.syllableDurations;
-    for (var index = 0; index < durations.length; index++) {
-      if (!mounted || !_playing) return;
-      setState(() => _activeSyllable = index);
-      final milliseconds = (durations[index] * 600 / _playbackSpeed).round();
-      await Future<void>.delayed(Duration(milliseconds: milliseconds));
-    }
+  @override
+  void initState() {
+    super.initState();
+    final words = widget.repository.words;
+    final initialIndex = words.indexWhere((item) => item.id == widget.word.id);
+    _currentIndex = initialIndex < 0 ? 0 : initialIndex;
+    _pageController = PageController(
+      initialPage: _currentIndex,
+      viewportFraction: 0.88,
+    );
+    _lastPage = _currentIndex.toDouble();
+    _pageController.addListener(_trackPageDirection);
+    _scrollController = ScrollController();
+    _pronunciation = PronunciationController(
+      speechService: widget.speechService ?? FlutterTtsSpeechService(),
+    );
   }
 
   @override
   void dispose() {
-    if (_ttsInitialized) _tts.stop();
+    _pageController.removeListener(_trackPageDirection);
+    _pageController.dispose();
+    _scrollController.dispose();
+    _pronunciation.dispose();
     super.dispose();
   }
 
+  RhythmWord _currentWord() {
+    final words = widget.repository.words;
+    if (words.isEmpty) return widget.word;
+    final safeIndex = _currentIndex.clamp(0, words.length - 1);
+    return words[safeIndex];
+  }
+
+  void _onPageChanged(int index) {
+    unawaited(_pronunciation.stop());
+    setState(() {
+      _currentIndex = index;
+      _flipped = false;
+      _rhythmRevealed = false;
+    });
+  }
+
+  void _trackPageDirection() {
+    if (!_pageController.hasClients ||
+        !_pageController.position.haveDimensions) {
+      return;
+    }
+    final page = _pageController.page ?? _lastPage;
+    if ((page - _lastPage).abs() > 0.0001) {
+      _pageDirection = page > _lastPage ? 1 : -1;
+      _lastPage = page;
+    }
+  }
+
+  Future<void> _playCurrent() async {
+    final word = _currentWord();
+    setState(() {
+      _flipped = false;
+      _rhythmRevealed = true;
+    });
+    await _pronunciation.play(word, intensity: _intensity);
+  }
+
+  void _openSpeakPractice() {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      constraints: BoxConstraints.tightFor(width: screenWidth),
+      builder: (_) => _SpeakPracticeSheet(word: _currentWord()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final word = widget.word;
-    final expandedCardExtent = math.max(
-      560.0,
-      MediaQuery.sizeOf(context).height - 100,
-    );
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        title: const Text('리듬 상세'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(word.isFavorite
-                ? Icons.favorite_rounded
-                : Icons.favorite_border_rounded),
+    return AnimatedBuilder(
+      animation: Listenable.merge([widget.repository, _pronunciation]),
+      builder: (context, _) {
+        final words = widget.repository.words;
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: AppColors.surface,
+            surfaceTintColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            title: const Text('리듬 상세'),
+            centerTitle: true,
           ),
-        ],
-      ),
-      body: SafeArea(
-        top: false,
-        child: CustomScrollView(
-          slivers: [
-            SliverPersistentHeader(
-              delegate: _WordCardHeaderDelegate(
-                word: word,
-                expandedExtent: expandedCardExtent,
-                playing: _playing,
-                activeSyllable: _activeSyllable,
-                flipped: _flipped,
-                onFlip: () => setState(() => _flipped = !_flipped),
-              ),
+          body: SafeArea(
+            top: false,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final cardHeight =
+                    (constraints.maxHeight * 0.63).clamp(470.0, 520.0);
+                return CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _PinnedWordCardDelegate(
+                        expandedHeight: constraints.maxHeight,
+                        collapsedHeight: (constraints.maxHeight * 0.54).clamp(
+                          430.0,
+                          480.0,
+                        ),
+                        cardHeight: cardHeight,
+                        indicator: Text(
+                          '${_currentIndex + 1} / ${words.length}  ·  좌우로 넘겨 다음 단어 보기',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.inkSoft,
+                            fontSize: 11,
+                          ),
+                        ),
+                        card: PageView.builder(
+                          key: const ValueKey(
+                            'word-card-page-view',
+                          ),
+                          controller: _pageController,
+                          clipBehavior: Clip.none,
+                          physics: const PageScrollPhysics(),
+                          itemCount: words.length,
+                          onPageChanged: _onPageChanged,
+                          itemBuilder: (context, index) {
+                            final word = words[index];
+                            final current = index == _currentIndex;
+                            return AnimatedBuilder(
+                              animation: _pageController,
+                              builder: (context, child) {
+                                final page = _pageController.hasClients &&
+                                        _pageController.position.haveDimensions
+                                    ? _pageController.page ??
+                                        _currentIndex.toDouble()
+                                    : _currentIndex.toDouble();
+                                final delta = index - page;
+                                final distance = delta.abs().clamp(0.0, 1.0);
+                                final outgoing =
+                                    _pageDirection > 0 ? delta < 0 : delta > 0;
+                                final verticalOffset =
+                                    outgoing ? -24 * distance : 0.0;
+                                final rotation = outgoing
+                                    ? (_pageDirection > 0 ? -0.011 : 0.011) *
+                                        distance
+                                    : 0.0;
+                                final scale = outgoing
+                                    ? 1 - 0.006 * distance
+                                    : 1 - 0.01 * distance;
+                                final opacity =
+                                    outgoing ? 1.0 : 1 - 0.035 * distance;
+                                return Transform.translate(
+                                  key: ValueKey(
+                                    'swipe-transform-${word.id}',
+                                  ),
+                                  offset: Offset(
+                                    0,
+                                    verticalOffset,
+                                  ),
+                                  child: Transform.rotate(
+                                    angle: rotation,
+                                    alignment: Alignment.bottomCenter,
+                                    child: Transform.scale(
+                                      scale: scale,
+                                      child: Opacity(
+                                        opacity: opacity,
+                                        child: child,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 8,
+                                ),
+                                child: WordRhythmCard(
+                                  word: word,
+                                  isCurrent: current,
+                                  playing: current && _pronunciation.playing,
+                                  activeSyllable: current
+                                      ? _pronunciation.activeSyllable
+                                      : -1,
+                                  playbackProgress:
+                                      current ? _pronunciation.progress : 0,
+                                  rhythmRevealed: current && _rhythmRevealed,
+                                  flipped: current && _flipped,
+                                  onFlip: current
+                                      ? () => setState(
+                                            () => _flipped = !_flipped,
+                                          )
+                                      : () {},
+                                  onPlay: current ? _playCurrent : () {},
+                                  onFavorite: () =>
+                                      widget.repository.toggleFavorite(word.id),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+                      sliver: SliverList.list(
+                        children: [
+                          const Divider(color: AppColors.line),
+                          const SizedBox(height: 20),
+                          Text(
+                            '리듬을 느껴보세요',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            '발음, 음절 강조와 진동이 같은 타이밍으로 재생됩니다.',
+                            style: TextStyle(
+                              color: AppColors.inkSoft,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          _PlaybackControls(
+                            playing: _pronunciation.playing,
+                            speed: _pronunciation.speed,
+                            intensity: _intensity,
+                            onSpeedChanged: _pronunciation.setSpeed,
+                            onIntensityChanged: (value) =>
+                                setState(() => _intensity = value),
+                          ),
+                          const SizedBox(height: 22),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 4,
+                                child: OutlinedButton.icon(
+                                  onPressed: _openSpeakPractice,
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(54),
+                                    side: const BorderSide(
+                                      color: AppColors.line,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadii.control,
+                                      ),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.mic_none_rounded),
+                                  label: const Text('말해보기'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                flex: 6,
+                                child: FilledButton.icon(
+                                  onPressed: _pronunciation.playing
+                                      ? null
+                                      : _playCurrent,
+                                  icon: Icon(
+                                    _pronunciation.playing
+                                        ? Icons.volume_up_rounded
+                                        : Icons.play_arrow_rounded,
+                                  ),
+                                  label: Text(
+                                    _pronunciation.playing
+                                        ? '리듬 재생 중'
+                                        : '발음과 진동 재생',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-              sliver: SliverList.list(
-                children: [
-                  _RhythmControlsCard(
-                    playing: _playing,
-                    playbackSpeed: _playbackSpeed,
-                    intensity: _intensity,
-                    onSpeedChanged: (speed) =>
-                        setState(() => _playbackSpeed = speed),
-                    onIntensityChanged: (value) =>
-                        setState(() => _intensity = value),
-                    onPlay: _playRhythm,
-                  ),
-                  const SizedBox(height: 20),
-                  _PracticeCard(word: word),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
-class _WordCardHeaderDelegate extends SliverPersistentHeaderDelegate {
-  const _WordCardHeaderDelegate({
-    required this.word,
-    required this.expandedExtent,
-    required this.playing,
-    required this.activeSyllable,
-    required this.flipped,
-    required this.onFlip,
+class _PinnedWordCardDelegate extends SliverPersistentHeaderDelegate {
+  const _PinnedWordCardDelegate({
+    required this.expandedHeight,
+    required this.collapsedHeight,
+    required this.cardHeight,
+    required this.card,
+    required this.indicator,
   });
 
-  final RhythmWord word;
-  final double expandedExtent;
-  final bool playing;
-  final int activeSyllable;
-  final bool flipped;
-  final VoidCallback onFlip;
+  final double expandedHeight;
+  final double collapsedHeight;
+  final double cardHeight;
+  final Widget card;
+  final Widget indicator;
 
   @override
-  double get maxExtent => expandedExtent;
+  double get maxExtent => expandedHeight;
 
   @override
-  double get minExtent => 292;
+  double get minExtent => collapsedHeight;
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
-    final sideMargin = 20 + 42 * progress;
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final range = maxExtent - minExtent;
+    final progress = range <= 0 ? 1.0 : (shrinkOffset / range).clamp(0.0, 1.0);
+    final motion = Curves.easeOutCubic.transform(progress);
+    final collapsedScale = ((collapsedHeight - 8) / cardHeight).clamp(
+      0.86,
+      0.91,
+    );
+    final scale = 1 - (1 - collapsedScale) * motion;
+    final indicatorOpacity = (1 - progress * 1.8).clamp(0.0, 1.0);
+
     return ColoredBox(
+      key: const ValueKey('pinned-word-card-header'),
       color: AppColors.surface,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          sideMargin,
-          8 + 4 * progress,
-          sideMargin,
-          12,
-        ),
-        child: _FlippableWordCard(
-          word: word,
-          progress: progress,
-          playing: playing,
-          activeSyllable: activeSyllable,
-          flipped: flipped,
-          onFlip: onFlip,
-        ),
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(covariant _WordCardHeaderDelegate oldDelegate) {
-    return oldDelegate.playing != playing ||
-        oldDelegate.activeSyllable != activeSyllable ||
-        oldDelegate.flipped != flipped ||
-        oldDelegate.expandedExtent != expandedExtent ||
-        oldDelegate.word != word;
-  }
-}
-
-class _FlippableWordCard extends StatelessWidget {
-  const _FlippableWordCard({
-    required this.word,
-    required this.progress,
-    required this.playing,
-    required this.activeSyllable,
-    required this.flipped,
-    required this.onFlip,
-  });
-
-  final RhythmWord word;
-  final double progress;
-  final bool playing;
-  final int activeSyllable;
-  final bool flipped;
-  final VoidCallback onFlip;
-
-  @override
-  Widget build(BuildContext context) {
-    final angle = flipped ? math.pi : 0.0;
-    return Semantics(
-      button: true,
-      label: flipped ? '단어 카드 앞면 보기' : '단어 상세 설명 보기',
-      child: GestureDetector(
-        key: const ValueKey('word-flip-card'),
-        onTap: onFlip,
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: angle),
-          duration: const Duration(milliseconds: 520),
-          curve: Curves.easeInOutCubic,
-          builder: (context, value, _) {
-            final showBack = value > math.pi / 2;
-            final transform = Matrix4.identity()
-              ..setEntry(3, 2, 0.0014)
-              ..rotateY(value);
-            return Transform(
-              alignment: Alignment.center,
-              transform: transform,
-              child: Transform(
-                alignment: Alignment.center,
-                transform: showBack
-                    ? (Matrix4.identity()..rotateY(math.pi))
-                    : Matrix4.identity(),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Color.alphaBlend(
-                      word.color.withValues(alpha: 0.11),
-                      Colors.white,
-                    ),
-                    border:
-                        Border.all(color: word.color.withValues(alpha: 0.55)),
-                    borderRadius: BorderRadius.circular(AppRadii.card),
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 150),
-                    child: showBack
-                        ? _WordCardBack(
-                            key: const ValueKey('word-card-back'),
-                            word: word,
-                            compact: progress > 0.48,
-                          )
-                        : _WordCardFront(
-                            key: const ValueKey('word-card-front'),
-                            word: word,
-                            progress: progress,
-                            playing: playing,
-                            activeSyllable: activeSyllable,
-                          ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _WordCardFront extends StatelessWidget {
-  const _WordCardFront({
-    super.key,
-    required this.word,
-    required this.progress,
-    required this.playing,
-    required this.activeSyllable,
-  });
-
-  final RhythmWord word;
-  final double progress;
-  final bool playing;
-  final int activeSyllable;
-
-  @override
-  Widget build(BuildContext context) {
-    final compact = progress > 0.58;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        22 - 6 * progress,
-        22 - 8 * progress,
-        22 - 6 * progress,
-        18 - 4 * progress,
-      ),
-      child: Column(
+      child: Stack(
+        clipBehavior: Clip.hardEdge,
         children: [
-          Row(
-            children: [
-              Text(
-                '${word.rhythmBeats} SYLLABLES',
-                style: const TextStyle(
-                  color: AppColors.inkSoft,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
+          Center(
+            child: Transform.translate(
+              offset: Offset(0, -48 * (1 - motion)),
+              child: Transform.scale(
+                key: const ValueKey('pinned-card-scale'),
+                scale: scale,
+                child: SizedBox(height: cardHeight, child: card),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 22,
+            child: IgnorePointer(
+              ignoring: indicatorOpacity < 0.5,
+              child: Opacity(opacity: indicatorOpacity, child: indicator),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedWordCardDelegate oldDelegate) {
+    return oldDelegate.expandedHeight != expandedHeight ||
+        oldDelegate.collapsedHeight != collapsedHeight ||
+        oldDelegate.cardHeight != cardHeight ||
+        oldDelegate.card != card ||
+        oldDelegate.indicator != indicator;
+  }
+}
+
+class _PlaybackControls extends StatelessWidget {
+  const _PlaybackControls({
+    required this.playing,
+    required this.speed,
+    required this.intensity,
+    required this.onSpeedChanged,
+    required this.onIntensityChanged,
+  });
+
+  final bool playing;
+  final double speed;
+  final double intensity;
+  final ValueChanged<double> onSpeedChanged;
+  final ValueChanged<double> onIntensityChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '재생 속도',
+          style: TextStyle(
+            color: AppColors.inkSoft,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            for (final option in [0.75, 1.0, 1.25]) ...[
+              Expanded(
+                child: _SpeedOption(
+                  value: option,
+                  selected: speed == option,
+                  enabled: !playing,
+                  onTap: () => onSpeedChanged(option),
                 ),
               ),
-              const Spacer(),
-              const Icon(Icons.flip_rounded,
-                  size: 17, color: AppColors.inkSoft),
+              if (option != 1.25) const SizedBox(width: 8),
             ],
-          ),
-          SizedBox(height: compact ? 10 : 24),
-          SoundLengthPattern(
-            lengths: word.syllableDurations,
-            color: word.color,
-            activeIndex: playing ? activeSyllable : -1,
-            emphasisIndex: word.stressIndex,
-            height: compact ? 8 : 12,
-            gap: 7,
-          ),
-          const Spacer(),
-          Text(
-            word.word,
-            style: TextStyle(
-              color: AppColors.ink,
-              fontSize: compact ? 24 : 34,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.7,
+          ],
+        ),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                '진동 강도',
+                style: TextStyle(
+                  color: AppColors.inkSoft,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
-          ),
-          SizedBox(height: compact ? 3 : 8),
-          Text(
-            '${word.phonetic}  ·  ${word.meaning}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: AppColors.inkSoft,
-              fontSize: compact ? 10 : 13,
-            ),
-          ),
-          const Spacer(),
-          _SyllableBlocks(
-            word: word,
-            activeSyllable: activeSyllable,
-            compact: compact,
-          ),
-          if (!compact) ...[
-            const SizedBox(height: 14),
             Text(
-              activeSyllable < 0
-                  ? '카드를 눌러 상세 설명 보기'
-                  : '지금 재생: ${word.syllables[activeSyllable]}',
-              style: TextStyle(
-                color: activeSyllable < 0
-                    ? AppColors.inkSoft
-                    : AppColors.orangeDark,
-                fontSize: 11,
+              '${(intensity * 100).round()}%',
+              style: const TextStyle(
+                color: AppColors.inkSoft,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ],
-        ],
-      ),
+        ),
+        Slider(
+          value: intensity,
+          onChanged: onIntensityChanged,
+        ),
+      ],
     );
   }
 }
 
-class _SyllableBlocks extends StatelessWidget {
-  const _SyllableBlocks({
-    required this.word,
-    required this.activeSyllable,
-    required this.compact,
+class _SpeedOption extends StatelessWidget {
+  const _SpeedOption({
+    required this.value,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
   });
 
-  final RhythmWord word;
-  final int activeSyllable;
-  final bool compact;
+  final double value;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(word.syllables.length, (index) {
-        final stressed = index == word.stressIndex;
-        final active = index == activeSyllable;
-        return Expanded(
-          flex: (word.syllableDurations[index] * 100).round(),
-          child: Padding(
-            padding: EdgeInsets.only(
-              right: index == word.syllables.length - 1 ? 0 : 8,
-            ),
-            child: AnimatedContainer(
-              key: ValueKey('syllable-${word.syllables[index]}'),
-              duration: const Duration(milliseconds: 160),
-              height: compact ? 38 : 50,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: active
-                    ? word.color
-                    : stressed
-                        ? word.color.withValues(alpha: 0.18)
-                        : Colors.white.withValues(alpha: 0.76),
-                borderRadius: BorderRadius.circular(AppRadii.small),
-                border: Border.all(
-                  color: active || stressed ? word.color : AppColors.line,
-                  width: active ? 2 : 1,
-                ),
-              ),
-              child: Text(
-                word.syllables[index],
-                style: TextStyle(
-                  color: active || stressed ? AppColors.ink : AppColors.inkSoft,
-                  fontSize: compact ? 13 : 16,
-                  fontWeight: FontWeight.w800,
-                ),
+    return Material(
+      color: selected ? AppColors.cream : Colors.white,
+      borderRadius: BorderRadius.circular(AppRadii.small),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(AppRadii.small),
+        child: SizedBox(
+          height: 42,
+          child: Center(
+            child: Text(
+              '$value×',
+              style: TextStyle(
+                color: selected ? AppColors.orangeDark : AppColors.inkSoft,
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
               ),
             ),
           ),
-        );
-      }),
-    );
-  }
-}
-
-class _WordCardBack extends StatelessWidget {
-  const _WordCardBack({super.key, required this.word, required this.compact});
-
-  final RhythmWord word;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, compact ? 16 : 26, 24, 22),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Text(
-                'RHYTHM NOTE',
-                style: TextStyle(
-                  color: AppColors.inkSoft,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.9,
-                ),
-              ),
-              const Spacer(),
-              const Icon(Icons.flip_rounded,
-                  size: 17, color: AppColors.inkSoft),
-            ],
-          ),
-          if (!compact) const Spacer(),
-          Text(
-            word.syllables.join(' · '),
-            style: TextStyle(
-              color: AppColors.orangeDark,
-              fontSize: compact ? 18 : 25,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          SizedBox(height: compact ? 8 : 14),
-          Text(
-            word.rhythmDescription,
-            textAlign: TextAlign.center,
-            maxLines: compact ? 2 : 3,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: AppColors.ink,
-              fontSize: compact ? 11 : 13,
-              height: 1.55,
-            ),
-          ),
-          if (!compact) ...[
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.72),
-                borderRadius: BorderRadius.circular(AppRadii.small),
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    'EXAMPLE',
-                    style: TextStyle(
-                      color: AppColors.inkSoft,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    word.exampleSentence,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              '카드를 눌러 앞면 보기',
-              style: TextStyle(color: AppColors.inkSoft, fontSize: 10),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _RhythmControlsCard extends StatelessWidget {
-  const _RhythmControlsCard({
-    required this.playing,
-    required this.playbackSpeed,
-    required this.intensity,
-    required this.onSpeedChanged,
-    required this.onIntensityChanged,
-    required this.onPlay,
-  });
-
-  final bool playing;
-  final double playbackSpeed;
-  final double intensity;
-  final ValueChanged<double> onSpeedChanged;
-  final ValueChanged<double> onIntensityChanged;
-  final VoidCallback onPlay;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('리듬을 느껴보세요', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 7),
-            const Text(
-              '강세가 있는 음절에서 더 길고 강한 진동이 전달됩니다.',
-              style: TextStyle(color: AppColors.inkSoft),
-            ),
-            const SizedBox(height: 22),
-            const Text('재생 속도',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.inkSoft,
-                    fontWeight: FontWeight.w700)),
-            const SizedBox(height: 9),
-            Row(
-              children: [
-                for (final speed in [0.75, 1.0, 1.2])
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 7),
-                      child: ChoiceChip(
-                        label: Text('${speed}x'),
-                        selected: playbackSpeed == speed,
-                        onSelected:
-                            playing ? null : (_) => onSpeedChanged(speed),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadii.small),
-                        ),
-                        showCheckmark: false,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(Icons.vibration_rounded, color: AppColors.orange),
-                Expanded(
-                  child: Slider(
-                    value: intensity,
-                    onChanged: onIntensityChanged,
-                  ),
-                ),
-                Text('${(intensity * 100).round()}%'),
-              ],
-            ),
-            const SizedBox(height: 10),
-            FilledButton.icon(
-              onPressed: playing ? null : onPlay,
-              icon: Icon(playing
-                  ? Icons.graphic_eq_rounded
-                  : Icons.play_arrow_rounded),
-              label: Text(playing ? '재생 중...' : '발음과 진동 재생'),
-            ),
-          ],
         ),
       ),
     );
   }
 }
 
-class _PracticeCard extends StatelessWidget {
-  const _PracticeCard({required this.word});
+class _SpeakPracticeSheet extends StatefulWidget {
+  const _SpeakPracticeSheet({required this.word});
 
   final RhythmWord word;
 
   @override
+  State<_SpeakPracticeSheet> createState() => _SpeakPracticeSheetState();
+}
+
+class _SpeakPracticeSheetState extends State<_SpeakPracticeSheet> {
+  Timer? _timer;
+  var _seconds = 0;
+  var _recording = false;
+  var _finished = false;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _toggleRecording() {
+    if (_recording) {
+      _finishRecording();
+      return;
+    }
+    setState(() {
+      _seconds = 0;
+      _recording = true;
+      _finished = false;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if (_seconds >= 9) {
+        _finishRecording();
+      } else {
+        setState(() => _seconds++);
+      }
+    });
+  }
+
+  void _finishRecording() {
+    _timer?.cancel();
+    setState(() {
+      _recording = false;
+      _finished = true;
+    });
+  }
+
+  void _showFeedback(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.circular(AppRadii.card),
+    final minutes = (_seconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_seconds % 60).toString().padLeft(2, '0');
+    final sheetHeight =
+        (MediaQuery.sizeOf(context).height * 0.55).clamp(420.0, 500.0);
+    return Material(
+      key: const ValueKey('speak-practice-sheet'),
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppRadii.card),
       ),
-      child: Row(
-        children: [
-          const IconTile(
-            icon: Icons.mic_rounded,
-            backgroundColor: AppColors.orange,
-            iconColor: Colors.white,
-          ),
-          const SizedBox(width: 15),
-          Expanded(
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          height: sheetHeight,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              22,
+              12,
+              22,
+              18 + MediaQuery.viewInsetsOf(context).bottom,
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  '이제 직접 말해볼까요?',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w800),
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.line,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 18),
                 Text(
-                  word.syllables.join(' · '),
-                  style: const TextStyle(color: Color(0xFFCFC8C2)),
+                  widget.word.word,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
+                const SizedBox(height: 6),
+                Text(
+                  widget.word.phonetic,
+                  style: const TextStyle(color: AppColors.inkSoft),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  widget.word.syllables.join(' · '),
+                  style: TextStyle(
+                    color: widget.word.color,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Semantics(
+                  button: true,
+                  label: _recording ? '녹음 종료' : '말하기 시작',
+                  child: InkWell(
+                    onTap: _toggleRecording,
+                    customBorder: const CircleBorder(),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 82,
+                      height: 82,
+                      decoration: BoxDecoration(
+                        color: _recording ? AppColors.orange : AppColors.cream,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _recording ? Icons.stop_rounded : Icons.mic_rounded,
+                        color: _recording ? Colors.white : AppColors.orangeDark,
+                        size: 34,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _recording
+                      ? '녹음 중  $minutes:$seconds'
+                      : _finished
+                          ? '말하기가 끝났어요'
+                          : '버튼을 누르고 편하게 말해보세요',
+                  style:
+                      const TextStyle(color: AppColors.inkSoft, fontSize: 12),
+                ),
+                if (_finished) ...[
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showFeedback('내 발음을 재생합니다.'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(46),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            side: const BorderSide(color: AppColors.line),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppRadii.control,
+                              ),
+                            ),
+                          ),
+                          icon: const Icon(Icons.play_arrow_rounded),
+                          label: const Text('내 발음 듣기'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showFeedback('원어민 발음을 재생합니다.'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(46),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            side: const BorderSide(color: AppColors.line),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppRadii.control,
+                              ),
+                            ),
+                          ),
+                          icon: const Icon(Icons.volume_up_outlined),
+                          label: const Text('원어민 발음'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _toggleRecording,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      icon: const Icon(Icons.mic_none_rounded),
+                      label: const Text('다시 말해보기'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-          IconButton.filled(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('발음 녹음을 시작합니다.')),
-              );
-            },
-            style: IconButton.styleFrom(backgroundColor: Colors.white),
-            icon: const Icon(Icons.arrow_forward_rounded, color: AppColors.ink),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
-import '../widgets/eng_logo.dart';
 import '../widgets/icon_tile.dart';
 import '../widgets/rhythm_wave.dart';
 
@@ -24,25 +23,9 @@ class _DeviceScreenState extends State<DeviceScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 96),
         children: [
-          const Row(
-            children: [
-              EngLogo(compact: true),
-              Spacer(),
-              Text(
-                'DEVICE',
-                style: TextStyle(
-                  color: AppColors.inkSoft,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 28),
-          Text('내 디바이스', style: Theme.of(context).textTheme.headlineLarge),
+          Text('연동', style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 7),
-          const Text('손끝으로 영어 리듬을 느끼는 연결 공간',
+          const Text('ENG 디바이스와 연결하고 리듬 감각을 조절하세요.',
               style: TextStyle(color: AppColors.inkSoft)),
           const SizedBox(height: 24),
           _DeviceHero(connected: _connected),
@@ -160,7 +143,6 @@ class _DeviceHero extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(22, 28, 22, 22),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.line),
         borderRadius: BorderRadius.circular(AppRadii.card),
       ),
       child: Column(
@@ -242,7 +224,6 @@ class _InfoRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadii.control),
-        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: [

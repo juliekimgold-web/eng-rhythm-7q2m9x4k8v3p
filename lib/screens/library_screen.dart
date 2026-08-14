@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
-import '../data/sample_data.dart';
 import '../models/rhythm_word.dart';
-import '../widgets/eng_logo.dart';
+import '../repositories/word_repository.dart';
 import '../widgets/sound_length_pattern.dart';
 import 'word_detail_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({super.key});
+  const LibraryScreen({super.key, required this.repository});
+
+  final WordRepository repository;
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -16,7 +17,6 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   final _searchController = TextEditingController();
-  final List<RhythmWord> _words = List.of(sampleWords);
   var _filter = '전체';
   var _mode = '갤러리';
   var _visibleMonth = DateTime(2026, 8);
@@ -30,30 +30,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   List<RhythmWord> get _filteredWords {
     final query = _searchController.text.trim().toLowerCase();
-    return _words.where((word) {
-      final matchesQuery = query.isEmpty ||
-          word.word.toLowerCase().contains(query) ||
-          word.meaning.contains(query);
-      final matchesFilter = switch (_filter) {
-        '즐겨찾기' => word.isFavorite,
-        '2박자' => word.rhythmBeats == 2,
-        '3박자' => word.rhythmBeats == 3,
-        _ => true,
-      };
-      return matchesQuery && matchesFilter;
-    }).toList();
+    return widget.repository.search(query: query, filter: _filter);
   }
 
-  List<RhythmWord> get _selectedWords => _words
-      .where((word) => DateUtils.isSameDay(word.collectedAt, _selectedDay))
-      .toList();
+  List<RhythmWord> get _selectedWords =>
+      widget.repository.wordsForDay(_selectedDay);
 
-  void _toggleFavorite(RhythmWord item) {
-    setState(() {
-      final index = _words.indexWhere((word) => word.word == item.word);
-      _words[index] = item.copyWith(isFavorite: !item.isFavorite);
-    });
-  }
+  void _toggleFavorite(RhythmWord item) =>
+      widget.repository.toggleFavorite(item.id);
 
   void _changeMonth(int offset) {
     setState(() {
@@ -65,183 +49,180 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final showingCalendar = _mode == '수집 기록';
-    final visibleWords = showingCalendar ? _selectedWords : _filteredWords;
-
     return SafeArea(
-      child: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-            sliver: SliverList.list(
-              children: [
-                const Row(
+      child: AnimatedBuilder(
+        animation: widget.repository,
+        builder: (context, _) {
+          final showingCalendar = _mode == '수집 기록';
+          final visibleWords =
+              showingCalendar ? _selectedWords : _filteredWords;
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+                sliver: SliverList.list(
                   children: [
-                    EngLogo(compact: true),
-                    Spacer(),
-                    Text(
-                      'RHYTHM LIBRARY',
-                      style: TextStyle(
-                        color: AppColors.inkSoft,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
-                      ),
+                    Text('수집한 단어',
+                        style: Theme.of(context).textTheme.headlineLarge),
+                    const SizedBox(height: 7),
+                    const Text(
+                      '익숙해진 리듬을 날짜와 패턴으로 다시 만나보세요.',
+                      style: TextStyle(color: AppColors.inkSoft),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Text('수집한 단어',
-                    style: Theme.of(context).textTheme.headlineLarge),
-                const SizedBox(height: 7),
-                const Text(
-                  '익숙해진 리듬을 날짜와 패턴으로 다시 만나보세요.',
-                  style: TextStyle(color: AppColors.inkSoft),
-                ),
-                const SizedBox(height: 20),
-                _LibraryModeSwitch(
-                  value: _mode,
-                  onChanged: (value) => setState(() => _mode = value),
-                ),
-                const SizedBox(height: 18),
-                if (showingCalendar) ...[
-                  _CollectionCalendar(
-                    month: _visibleMonth,
-                    selectedDay: _selectedDay,
-                    words: _words,
-                    onPreviousMonth: () => _changeMonth(-1),
-                    onNextMonth: () => _changeMonth(1),
-                    onSelectDay: (day) => setState(() => _selectedDay = day),
-                  ),
-                  const SizedBox(height: 22),
-                  Row(
-                    children: [
-                      Text(
-                        _selectedDateLabel(_selectedDay),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${visibleWords.length}개 수집',
-                        style: const TextStyle(
-                          color: AppColors.orangeDark,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  TextField(
-                    controller: _searchController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      hintText: '단어 또는 뜻 검색',
-                      prefixIcon: Icon(Icons.search_rounded),
+                    const SizedBox(height: 20),
+                    _LibraryModeSwitch(
+                      value: _mode,
+                      onChanged: (value) => setState(() => _mode = value),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    height: 42,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: ['전체', '즐겨찾기', '2박자', '3박자'].map((filter) {
-                        final selected = _filter == filter;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: InkWell(
-                            onTap: () => setState(() => _filter = filter),
-                            borderRadius: BorderRadius.circular(AppRadii.small),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: selected ? AppColors.ink : Colors.white,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadii.small),
-                                border: Border.all(color: AppColors.line),
-                              ),
-                              child: Text(
-                                filter,
-                                style: TextStyle(
-                                  color: selected
-                                      ? Colors.white
-                                      : AppColors.inkSoft,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1,
-                                ),
-                              ),
+                    const SizedBox(height: 18),
+                    if (showingCalendar) ...[
+                      _CollectionCalendar(
+                        month: _visibleMonth,
+                        selectedDay: _selectedDay,
+                        words: widget.repository.words,
+                        onPreviousMonth: () => _changeMonth(-1),
+                        onNextMonth: () => _changeMonth(1),
+                        onSelectDay: (day) =>
+                            setState(() => _selectedDay = day),
+                      ),
+                      const SizedBox(height: 22),
+                      Row(
+                        children: [
+                          Text(
+                            _selectedDateLabel(_selectedDay),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${visibleWords.length}개 수집',
+                            style: const TextStyle(
+                              color: AppColors.orangeDark,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  Row(
-                    children: [
-                      Text(
-                        '${visibleWords.length}개의 단어',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        ],
                       ),
-                      const Spacer(),
-                      const Icon(Icons.swap_vert_rounded,
-                          size: 18, color: AppColors.inkSoft),
-                      const SizedBox(width: 4),
-                      const Text('최근 수집순',
-                          style: TextStyle(
-                              color: AppColors.inkSoft, fontSize: 12)),
+                    ] else ...[
+                      TextField(
+                        controller: _searchController,
+                        onChanged: (_) => setState(() {}),
+                        decoration: const InputDecoration(
+                          hintText: '단어 또는 뜻 검색',
+                          prefixIcon: Icon(Icons.search_rounded),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        height: 42,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: ['전체', '즐겨찾기', '2박자', '3박자'].map((filter) {
+                            final selected = _filter == filter;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: InkWell(
+                                onTap: () => setState(() => _filter = filter),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadii.small),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        selected ? AppColors.ink : Colors.white,
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadii.small),
+                                    border: Border.all(color: AppColors.line),
+                                  ),
+                                  child: Text(
+                                    filter,
+                                    style: TextStyle(
+                                      color: selected
+                                          ? Colors.white
+                                          : AppColors.inkSoft,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Row(
+                        children: [
+                          Text(
+                            '${visibleWords.length}개의 단어',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const Spacer(),
+                          const Icon(Icons.swap_vert_rounded,
+                              size: 18, color: AppColors.inkSoft),
+                          const SizedBox(width: 4),
+                          const Text('최근 수집순',
+                              style: TextStyle(
+                                  color: AppColors.inkSoft, fontSize: 12)),
+                        ],
+                      ),
                     ],
-                  ),
-                ],
-                const SizedBox(height: 12),
-              ],
-            ),
-          ),
-          if (visibleWords.isEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 120),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 36),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: AppColors.line),
-                    borderRadius: BorderRadius.circular(AppRadii.card),
-                  ),
-                  child: Text(
-                    showingCalendar ? '이 날 수집한 단어가 없습니다.' : '조건에 맞는 단어가 없습니다.',
-                    style: const TextStyle(color: AppColors.inkSoft),
-                  ),
+                    const SizedBox(height: 12),
+                  ],
                 ),
               ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 96),
-              sliver: SliverList.separated(
-                itemCount: visibleWords.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final item = visibleWords[index];
-                  return _LibraryWordCard(
-                    word: item,
-                    showTime: showingCalendar,
-                    onFavorite: () => _toggleFavorite(item),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => WordDetailScreen(word: item),
+              if (visibleWords.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 120),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 36),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: AppColors.line),
+                        borderRadius: BorderRadius.circular(AppRadii.card),
+                      ),
+                      child: Text(
+                        showingCalendar
+                            ? '이 날 수집한 단어가 없습니다.'
+                            : '조건에 맞는 단어가 없습니다.',
+                        style: const TextStyle(color: AppColors.inkSoft),
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
-        ],
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 96),
+                  sliver: SliverList.separated(
+                    itemCount: visibleWords.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final item = visibleWords[index];
+                      return _LibraryWordCard(
+                        word: item,
+                        showTime: showingCalendar,
+                        onFavorite: () => _toggleFavorite(item),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => WordDetailScreen(
+                              word: item,
+                              repository: widget.repository,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -340,7 +321,6 @@ class _CollectionCalendar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.line),
         borderRadius: BorderRadius.circular(AppRadii.card),
       ),
       child: Column(
@@ -479,7 +459,6 @@ class _LibraryWordCard extends StatelessWidget {
       color: tint,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.card),
-        side: BorderSide(color: word.color.withValues(alpha: 0.48)),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(

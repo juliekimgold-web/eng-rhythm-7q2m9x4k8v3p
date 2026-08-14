@@ -1,22 +1,28 @@
 import 'package:flutter/material.dart';
 
 class RhythmWord {
-  const RhythmWord({
+  RhythmWord({
+    required this.id,
+    required this.cardNumber,
     required this.word,
     required this.phonetic,
     required this.meaning,
-    required this.syllables,
+    required List<String> syllables,
     required this.stressIndex,
     required this.color,
     required this.source,
     required this.collectedAt,
-    required this.soundPattern,
-    required this.syllableDurations,
+    required List<double> soundPattern,
+    required List<double> syllableDurations,
     required this.rhythmDescription,
     required this.exampleSentence,
     this.isFavorite = false,
-  });
+  })  : syllables = List.unmodifiable(syllables),
+        soundPattern = List.unmodifiable(soundPattern),
+        syllableDurations = List.unmodifiable(syllableDurations);
 
+  final String id;
+  final int cardNumber;
   final String word;
   final String phonetic;
   final String meaning;
@@ -33,20 +39,38 @@ class RhythmWord {
 
   int get rhythmBeats => syllables.length;
 
-  RhythmWord copyWith({bool? isFavorite}) {
+  RhythmWord copyWith({
+    String? id,
+    int? cardNumber,
+    String? word,
+    String? phonetic,
+    String? meaning,
+    List<String>? syllables,
+    int? stressIndex,
+    Color? color,
+    String? source,
+    DateTime? collectedAt,
+    List<double>? soundPattern,
+    List<double>? syllableDurations,
+    String? rhythmDescription,
+    String? exampleSentence,
+    bool? isFavorite,
+  }) {
     return RhythmWord(
-      word: word,
-      phonetic: phonetic,
-      meaning: meaning,
-      syllables: syllables,
-      stressIndex: stressIndex,
-      color: color,
-      source: source,
-      collectedAt: collectedAt,
-      soundPattern: soundPattern,
-      syllableDurations: syllableDurations,
-      rhythmDescription: rhythmDescription,
-      exampleSentence: exampleSentence,
+      id: id ?? this.id,
+      cardNumber: cardNumber ?? this.cardNumber,
+      word: word ?? this.word,
+      phonetic: phonetic ?? this.phonetic,
+      meaning: meaning ?? this.meaning,
+      syllables: syllables ?? this.syllables,
+      stressIndex: stressIndex ?? this.stressIndex,
+      color: color ?? this.color,
+      source: source ?? this.source,
+      collectedAt: collectedAt ?? this.collectedAt,
+      soundPattern: soundPattern ?? this.soundPattern,
+      syllableDurations: syllableDurations ?? this.syllableDurations,
+      rhythmDescription: rhythmDescription ?? this.rhythmDescription,
+      exampleSentence: exampleSentence ?? this.exampleSentence,
       isFavorite: isFavorite ?? this.isFavorite,
     );
   }
