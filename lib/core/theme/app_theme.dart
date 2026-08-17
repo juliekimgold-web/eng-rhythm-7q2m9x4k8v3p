@@ -97,6 +97,7 @@ abstract final class AppTheme {
             borderRadius: BorderRadius.circular(AppRadii.control),
           ),
           textStyle: const TextStyle(
+            fontFamily: 'Pretendard',
             fontSize: 15,
             fontWeight: FontWeight.w700,
           ),
