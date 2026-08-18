@@ -73,6 +73,27 @@ abstract final class AppShadows {
     ),
   ];
 
+  static const raisedCard = <BoxShadow>[
+    BoxShadow(
+      color: Color(0x16000000),
+      blurRadius: 20,
+      offset: Offset(0, 8),
+    ),
+    BoxShadow(
+      color: Color(0x08000000),
+      blurRadius: 4,
+      offset: Offset(0, 1),
+    ),
+  ];
+
+  static const bottomSheet = <BoxShadow>[
+    BoxShadow(
+      color: Color(0x14000000),
+      blurRadius: 24,
+      offset: Offset(0, -6),
+    ),
+  ];
+
   static const control = <BoxShadow>[
     BoxShadow(
       color: Color(0x0D000000),

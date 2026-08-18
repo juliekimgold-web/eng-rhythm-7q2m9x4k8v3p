@@ -413,7 +413,7 @@ void main() {
     expect(find.text(sampleWords.first.exampleSentence), findsOneWidget);
   });
 
-  testWidgets('detail card swipes calmly and reveals controls on scroll',
+  testWidgets('detail card lifts on swipe and reveals the control sheet',
       (tester) async {
     tester.view.physicalSize = const Size(400, 900);
     tester.view.devicePixelRatio = 1;
@@ -447,20 +447,35 @@ void main() {
     final outgoingCard = tester.widget<Transform>(
       find.byKey(const ValueKey('swipe-transform-laundry')),
     );
-    expect(outgoingCard.transform.getTranslation().y, 0);
+    expect(outgoingCard.transform.getTranslation().y, lessThan(0));
+    final outgoingRotation = tester.widget<Transform>(
+      find.byKey(const ValueKey('swipe-rotation-laundry')),
+    );
+    expect(outgoingRotation.transform.storage[1].abs(), greaterThan(0));
 
     await gesture.up();
     await tester.pumpAndSettle();
 
     expect(find.text('2 / 6  ·  좌우로 넘겨 다음 단어 보기'), findsOneWidget);
 
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -620));
+    await tester.drag(
+      find.byKey(const ValueKey('word-card-page-view')),
+      const Offset(0, -620),
+    );
     await tester.pumpAndSettle();
     final pinnedScale = tester.widget<Transform>(
       find.byKey(const ValueKey('pinned-card-scale')),
     );
+    final collapsedScale = pinnedScale.transform.storage[0];
+    expect(collapsedScale, greaterThanOrEqualTo(0.86));
     expect(
-        pinnedScale.transform.getMaxScaleOnAxis(), greaterThanOrEqualTo(0.86));
+      collapsedScale,
+      lessThan(1),
+    );
+    expect(
+      find.text('리듬 조정').hitTestable(),
+      findsOneWidget,
+    );
     expect(
       find.widgetWithText(FilledButton, '발음과 진동 재생').hitTestable(),
       findsOneWidget,

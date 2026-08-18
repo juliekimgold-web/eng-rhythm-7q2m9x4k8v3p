@@ -32,6 +32,8 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
   late final PageController _pageController;
   late final ScrollController _scrollController;
   late int _currentIndex;
+  var _lastPage = 0.0;
+  var _pageDirection = 1;
   var _flipped = false;
   var _rhythmRevealed = false;
   var _intensity = 0.72;
@@ -46,6 +48,8 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
       initialPage: _currentIndex,
       viewportFraction: 0.88,
     );
+    _lastPage = _currentIndex.toDouble();
+    _pageController.addListener(_trackPageDirection);
     _scrollController = ScrollController();
     _pronunciation = PronunciationController(
       speechService: widget.speechService ?? FlutterTtsSpeechService(),
@@ -59,6 +63,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
 
   @override
   void dispose() {
+    _pageController.removeListener(_trackPageDirection);
     _pageController.dispose();
     _scrollController.dispose();
     _pronunciation.dispose();
@@ -79,6 +84,44 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
       _flipped = false;
       _rhythmRevealed = false;
     });
+  }
+
+  void _trackPageDirection() {
+    if (!_pageController.hasClients ||
+        !_pageController.position.haveDimensions) {
+      return;
+    }
+    final page = _pageController.page ?? _lastPage;
+    if ((page - _lastPage).abs() > 0.0001) {
+      _pageDirection = page > _lastPage ? 1 : -1;
+      _lastPage = page;
+    }
+  }
+
+  void _onCardVerticalDragUpdate(DragUpdateDetails details) {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    final nextOffset = (_scrollController.offset - details.delta.dy).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    _scrollController.jumpTo(nextOffset);
+  }
+
+  void _onCardVerticalDragEnd(DragEndDetails details) {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    final velocity = details.primaryVelocity ?? 0;
+    final open = velocity < -250 ||
+        (velocity <= 250 &&
+            _scrollController.offset > position.maxScrollExtent * 0.18);
+    unawaited(
+      _scrollController.animateTo(
+        open ? position.maxScrollExtent : position.minScrollExtent,
+        duration: AppMotion.slow,
+        curve: Curves.easeOutCubic,
+      ),
+    );
   }
 
   Future<void> _playCurrent() async {
@@ -129,7 +172,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                     SliverPersistentHeader(
                       pinned: true,
                       delegate: _PinnedWordCardDelegate(
-                        expandedHeight: constraints.maxHeight,
+                        expandedHeight: constraints.maxHeight - 56,
                         collapsedHeight: (constraints.maxHeight * 0.54).clamp(
                           430.0,
                           480.0,
@@ -165,46 +208,76 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                                     : _currentIndex.toDouble();
                                 final delta = index - page;
                                 final distance = delta.abs().clamp(0.0, 1.0);
-                                final scale = 1 - 0.008 * distance;
-                                final opacity = 1 - 0.04 * distance;
+                                final outgoing =
+                                    _pageDirection > 0 ? delta < 0 : delta > 0;
+                                final verticalOffset =
+                                    outgoing ? -24 * distance : 0.0;
+                                final rotation = outgoing
+                                    ? (_pageDirection > 0 ? -0.011 : 0.011) *
+                                        distance
+                                    : 0.0;
+                                final scale = outgoing
+                                    ? 1 - 0.006 * distance
+                                    : 1 - 0.01 * distance;
+                                final opacity =
+                                    outgoing ? 1.0 : 1 - 0.035 * distance;
                                 return Transform.translate(
                                   key: ValueKey(
                                     'swipe-transform-${word.id}',
                                   ),
-                                  offset: Offset.zero,
-                                  child: Transform.scale(
-                                    scale: scale,
-                                    child: Opacity(
-                                      opacity: opacity,
-                                      child: child,
+                                  offset: Offset(0, verticalOffset),
+                                  child: Transform.rotate(
+                                    key: ValueKey(
+                                      'swipe-rotation-${word.id}',
+                                    ),
+                                    angle: rotation,
+                                    alignment: Alignment.bottomCenter,
+                                    child: Transform.scale(
+                                      scale: scale,
+                                      child: Opacity(
+                                        opacity: opacity,
+                                        child: child,
+                                      ),
                                     ),
                                   ),
                                 );
                               },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 8,
-                                ),
-                                child: WordRhythmCard(
-                                  word: word,
-                                  isCurrent: current,
-                                  playing: current && _pronunciation.playing,
-                                  activeSyllable: current
-                                      ? _pronunciation.activeSyllable
-                                      : -1,
-                                  playbackProgress:
-                                      current ? _pronunciation.progress : 0,
-                                  rhythmRevealed: current && _rhythmRevealed,
-                                  flipped: current && _flipped,
-                                  onFlip: current
-                                      ? () => setState(
-                                            () => _flipped = !_flipped,
-                                          )
-                                      : () {},
-                                  onPlay: current ? _playCurrent : () {},
-                                  onFavorite: () =>
-                                      widget.repository.toggleFavorite(word.id),
+                              child: GestureDetector(
+                                key: current
+                                    ? const ValueKey(
+                                        'word-card-vertical-gesture',
+                                      )
+                                    : null,
+                                behavior: HitTestBehavior.translucent,
+                                onVerticalDragUpdate:
+                                    current ? _onCardVerticalDragUpdate : null,
+                                onVerticalDragEnd:
+                                    current ? _onCardVerticalDragEnd : null,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 8,
+                                  ),
+                                  child: WordRhythmCard(
+                                    word: word,
+                                    isCurrent: current,
+                                    playing: current && _pronunciation.playing,
+                                    activeSyllable: current
+                                        ? _pronunciation.activeSyllable
+                                        : -1,
+                                    playbackProgress:
+                                        current ? _pronunciation.progress : 0,
+                                    rhythmRevealed: current && _rhythmRevealed,
+                                    flipped: current && _flipped,
+                                    onFlip: current
+                                        ? () => setState(
+                                              () => _flipped = !_flipped,
+                                            )
+                                        : () {},
+                                    onPlay: current ? _playCurrent : () {},
+                                    onFavorite: () => widget.repository
+                                        .toggleFavorite(word.id),
+                                  ),
                                 ),
                               ),
                             );
@@ -212,66 +285,16 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                         ),
                       ),
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-                      sliver: SliverList.list(
-                        children: [
-                          const Divider(color: AppColors.line),
-                          const SizedBox(height: 20),
-                          Text(
-                            '리듬을 느껴보세요',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            '발음, 음절 강조와 진동이 같은 타이밍으로 재생됩니다.',
-                            style: TextStyle(
-                              color: AppColors.inkSoft,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 22),
-                          _PlaybackControls(
-                            playing: _pronunciation.playing,
-                            speed: _pronunciation.speed,
-                            intensity: _intensity,
-                            onSpeedChanged: _pronunciation.setSpeed,
-                            onIntensityChanged: (value) =>
-                                setState(() => _intensity = value),
-                          ),
-                          const SizedBox(height: 22),
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: 4,
-                                child: OutlinedButton.icon(
-                                  onPressed: _openSpeakPractice,
-                                  icon: const Icon(Icons.mic_none_rounded),
-                                  label: const Text('말해보기'),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                flex: 6,
-                                child: FilledButton.icon(
-                                  onPressed: _pronunciation.playing
-                                      ? null
-                                      : _playCurrent,
-                                  icon: Icon(
-                                    _pronunciation.playing
-                                        ? Icons.volume_up_rounded
-                                        : Icons.play_arrow_rounded,
-                                  ),
-                                  label: Text(
-                                    _pronunciation.playing
-                                        ? '리듬 재생 중'
-                                        : '발음과 진동 재생',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                    SliverToBoxAdapter(
+                      child: _RhythmControlSheet(
+                        playing: _pronunciation.playing,
+                        speed: _pronunciation.speed,
+                        intensity: _intensity,
+                        onSpeedChanged: _pronunciation.setSpeed,
+                        onIntensityChanged: (value) =>
+                            setState(() => _intensity = value),
+                        onPractice: _openSpeakPractice,
+                        onPlay: _playCurrent,
                       ),
                     ),
                   ],
@@ -359,6 +382,110 @@ class _PinnedWordCardDelegate extends SliverPersistentHeaderDelegate {
         oldDelegate.cardHeight != cardHeight ||
         oldDelegate.card != card ||
         oldDelegate.indicator != indicator;
+  }
+}
+
+class _RhythmControlSheet extends StatelessWidget {
+  const _RhythmControlSheet({
+    required this.playing,
+    required this.speed,
+    required this.intensity,
+    required this.onSpeedChanged,
+    required this.onIntensityChanged,
+    required this.onPractice,
+    required this.onPlay,
+  });
+
+  final bool playing;
+  final double speed;
+  final double intensity;
+  final ValueChanged<double> onSpeedChanged;
+  final ValueChanged<double> onIntensityChanged;
+  final VoidCallback onPractice;
+  final VoidCallback onPlay;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      key: const ValueKey('rhythm-control-sheet'),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadii.large),
+        ),
+        boxShadow: AppShadows.bottomSheet,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.line,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                '리듬 조정',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                '발음, 음절 강조와 진동이 같은 타이밍으로 재생됩니다.',
+                style: TextStyle(
+                  color: AppColors.inkSoft,
+                  fontSize: AppTypeScale.compactLabel,
+                ),
+              ),
+              const SizedBox(height: 22),
+              _PlaybackControls(
+                playing: playing,
+                speed: speed,
+                intensity: intensity,
+                onSpeedChanged: onSpeedChanged,
+                onIntensityChanged: onIntensityChanged,
+              ),
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: OutlinedButton.icon(
+                      onPressed: onPractice,
+                      icon: const Icon(Icons.mic_none_rounded),
+                      label: const Text('말해보기'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 6,
+                    child: FilledButton.icon(
+                      onPressed: playing ? null : onPlay,
+                      icon: Icon(
+                        playing
+                            ? Icons.volume_up_rounded
+                            : Icons.play_arrow_rounded,
+                      ),
+                      label: Text(
+                        playing ? '리듬 재생 중' : '발음과 진동 재생',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

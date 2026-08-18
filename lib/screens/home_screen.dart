@@ -757,98 +757,106 @@ class _TodayRhythmCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      elevation: 1,
-      shadowColor: const Color(0x18000000),
-      shape: RoundedRectangleBorder(
+    return DecoratedBox(
+      key: ValueKey('recent-feature-card-${word.id}'),
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadii.card),
+        boxShadow: AppShadows.raisedCard,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 19, 18, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      'NO.${word.cardNumber.toString().padLeft(2, '0')}',
-                      style: const TextStyle(
-                        color: AppColors.inkSoft,
-                        fontSize: AppTypeScale.caption,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.5,
+      child: Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          side: BorderSide(
+            color: AppColors.line.withValues(alpha: 0.55),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 19, 18, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'NO.${word.cardNumber.toString().padLeft(2, '0')}',
+                        style: const TextStyle(
+                          color: AppColors.inkSoft,
+                          fontSize: AppTypeScale.caption,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  const Icon(
-                    Icons.arrow_forward_rounded,
-                    color: AppColors.ink,
-                    size: 20,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 26),
-              Text(
-                word.word,
-                style: const TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 29,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                '${word.phonetic}  ·  ${word.meaning}',
-                style: const TextStyle(
-                  color: AppColors.inkSoft,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 22),
-              Row(
-                children: [
-                  Expanded(
-                    child: SoundLengthPattern(
-                      key: ValueKey('recent-rhythm-${word.id}'),
-                      lengths: word.syllableDurations,
-                      color: word.color,
-                      height: 8,
-                      gap: 7,
-                    ),
-                  ),
-                  const SizedBox(width: 18),
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppRadii.control),
-                    ),
-                    child: Icon(
-                      Icons.volume_up_rounded,
-                      color: word.color,
+                    const Spacer(),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: AppColors.ink,
                       size: 20,
                     ),
+                  ],
+                ),
+                const SizedBox(height: 26),
+                Text(
+                  word.word,
+                  style: const TextStyle(
+                    color: AppColors.ink,
+                    fontSize: 29,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.8,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '${word.phonetic}  ·  ${word.meaning}',
+                  style: const TextStyle(
+                    color: AppColors.inkSoft,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SoundLengthPattern(
+                        key: ValueKey('recent-rhythm-${word.id}'),
+                        lengths: word.syllableDurations,
+                        color: word.color,
+                        height: 8,
+                        gap: 7,
+                      ),
+                    ),
+                    const SizedBox(width: 18),
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppRadii.control),
+                      ),
+                      child: Icon(
+                        Icons.volume_up_rounded,
+                        color: word.color,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -898,72 +906,80 @@ class _RecentWordCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 148,
-      child: Material(
-        color: Colors.white,
-        elevation: 1,
-        shadowColor: const Color(0x18000000),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+      child: DecoratedBox(
+        key: ValueKey('recent-mini-card-${word.id}'),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          boxShadow: AppShadows.raisedCard,
         ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: word.color,
-                        shape: BoxShape.circle,
+        child: Material(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadii.card),
+            side: BorderSide(
+              color: AppColors.line.withValues(alpha: 0.45),
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: word.color,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${word.rhythmBeats} beats',
-                      style: const TextStyle(
-                        color: AppColors.inkSoft,
-                        fontSize: AppTypeScale.caption,
-                        fontWeight: FontWeight.w500,
+                      const Spacer(),
+                      Text(
+                        '${word.rhythmBeats} beats',
+                        style: const TextStyle(
+                          color: AppColors.inkSoft,
+                          fontSize: AppTypeScale.caption,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 17),
+                  Text(
+                    word.word,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 17),
-                Text(
-                  word.word,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
                   ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  word.meaning,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.inkSoft,
-                    fontSize: AppTypeScale.caption,
+                  const SizedBox(height: 3),
+                  Text(
+                    word.meaning,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.inkSoft,
+                      fontSize: AppTypeScale.caption,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                SoundLengthPattern(
-                  key: ValueKey('mini-rhythm-${word.id}'),
-                  lengths: word.syllableDurations,
-                  color: word.color,
-                  height: 6,
-                  gap: 4,
-                ),
-              ],
+                  const Spacer(),
+                  SoundLengthPattern(
+                    key: ValueKey('mini-rhythm-${word.id}'),
+                    lengths: word.syllableDurations,
+                    color: word.color,
+                    height: 6,
+                    gap: 4,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
