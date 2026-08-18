@@ -34,10 +34,13 @@ flutter run -d chrome
 웹 릴리스 빌드는 다음 명령으로 다시 생성할 수 있습니다.
 
 ```powershell
-flutter build web --release
+flutter build web --release --pwa-strategy=none
 ```
 
 산출물은 `build/web`에 생성됩니다.
+
+GitHub Pages는 다른 기기에서도 배포 직후 최신 버전을 받도록 Flutter의
+오프라인 서비스 워커 캐시를 사용하지 않습니다.
 
 ## Android 실행
 
