@@ -30,10 +30,11 @@ class WordDetailScreen extends StatefulWidget {
 class _WordDetailScreenState extends State<WordDetailScreen> {
   late final PronunciationController _pronunciation;
   late final PageController _pageController;
-  late final ScrollController _scrollController;
   late int _currentIndex;
   var _lastPage = 0.0;
   var _pageDirection = 1;
+  var _verticalDragDistance = 0.0;
+  var _controlsOpen = false;
   var _flipped = false;
   var _rhythmRevealed = false;
   var _intensity = 0.72;
@@ -50,7 +51,6 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
     );
     _lastPage = _currentIndex.toDouble();
     _pageController.addListener(_trackPageDirection);
-    _scrollController = ScrollController();
     _pronunciation = PronunciationController(
       speechService: widget.speechService ?? FlutterTtsSpeechService(),
     );
@@ -65,7 +65,6 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
   void dispose() {
     _pageController.removeListener(_trackPageDirection);
     _pageController.dispose();
-    _scrollController.dispose();
     _pronunciation.dispose();
     super.dispose();
   }
@@ -98,30 +97,66 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
     }
   }
 
+  void _onCardVerticalDragStart(DragStartDetails details) {
+    if (_controlsOpen) return;
+    setState(() => _verticalDragDistance = 0);
+  }
+
   void _onCardVerticalDragUpdate(DragUpdateDetails details) {
-    if (!_scrollController.hasClients) return;
-    final position = _scrollController.position;
-    final nextOffset = (_scrollController.offset - details.delta.dy).clamp(
-      position.minScrollExtent,
-      position.maxScrollExtent,
-    );
-    _scrollController.jumpTo(nextOffset);
+    if (_controlsOpen) return;
+    setState(() {
+      _verticalDragDistance =
+          (_verticalDragDistance - details.delta.dy).clamp(0, 72);
+    });
   }
 
   void _onCardVerticalDragEnd(DragEndDetails details) {
-    if (!_scrollController.hasClients) return;
-    final position = _scrollController.position;
-    final velocity = details.primaryVelocity ?? 0;
-    final open = velocity < -250 ||
-        (velocity <= 250 &&
-            _scrollController.offset > position.maxScrollExtent * 0.18);
-    unawaited(
-      _scrollController.animateTo(
-        open ? position.maxScrollExtent : position.minScrollExtent,
-        duration: AppMotion.slow,
-        curve: Curves.easeOutCubic,
+    final shouldOpen =
+        (details.primaryVelocity ?? 0) < -250 || _verticalDragDistance >= 28;
+    if (shouldOpen) {
+      unawaited(_openRhythmControls());
+    } else {
+      setState(() => _verticalDragDistance = 0);
+    }
+  }
+
+  Future<void> _openRhythmControls() async {
+    if (_controlsOpen) return;
+    setState(() {
+      _controlsOpen = true;
+      _verticalDragDistance = 72;
+    });
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x10000000),
+      constraints: BoxConstraints.tightFor(width: screenWidth),
+      builder: (_) => StatefulBuilder(
+        builder: (context, setSheetState) => AnimatedBuilder(
+          animation: _pronunciation,
+          builder: (context, _) => _RhythmControlSheet(
+            playing: _pronunciation.playing,
+            speed: _pronunciation.speed,
+            intensity: _intensity,
+            onSpeedChanged: _pronunciation.setSpeed,
+            onIntensityChanged: (value) {
+              setState(() => _intensity = value);
+              setSheetState(() {});
+            },
+            onPractice: _openSpeakPractice,
+            onPlay: _playCurrent,
+          ),
+        ),
       ),
     );
+    if (!mounted) return;
+    setState(() {
+      _controlsOpen = false;
+      _verticalDragDistance = 0;
+    });
   }
 
   Future<void> _playCurrent() async {
@@ -166,135 +201,169 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
               builder: (context, constraints) {
                 final cardHeight =
                     (constraints.maxHeight * 0.63).clamp(470.0, 520.0);
+                final sheetProgress =
+                    (_verticalDragDistance / 72).clamp(0.0, 1.0);
                 return CustomScrollView(
-                  controller: _scrollController,
+                  physics: const NeverScrollableScrollPhysics(),
                   slivers: [
                     SliverPersistentHeader(
                       pinned: true,
                       delegate: _PinnedWordCardDelegate(
-                        expandedHeight: constraints.maxHeight - 56,
+                        expandedHeight: constraints.maxHeight,
                         collapsedHeight: (constraints.maxHeight * 0.54).clamp(
                           430.0,
                           480.0,
                         ),
                         cardHeight: cardHeight,
-                        indicator: Text(
-                          '${_currentIndex + 1} / ${words.length}  ·  좌우로 넘겨 다음 단어 보기',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.inkSoft,
-                            fontSize: AppTypeScale.caption,
+                        indicator: GestureDetector(
+                          key: const ValueKey('rhythm-sheet-handle'),
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => unawaited(_openRhythmControls()),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${_currentIndex + 1} / ${words.length}  ·  좌우로 넘겨 다음 단어 보기',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: AppColors.inkSoft,
+                                    fontSize: AppTypeScale.caption,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  '위로 밀어 리듬 조정',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: AppColors.ink,
+                                    fontSize: AppTypeScale.caption,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        card: PageView.builder(
-                          key: const ValueKey(
-                            'word-card-page-view',
-                          ),
-                          controller: _pageController,
-                          clipBehavior: Clip.none,
-                          physics: const PageScrollPhysics(),
-                          itemCount: words.length,
-                          onPageChanged: _onPageChanged,
-                          itemBuilder: (context, index) {
-                            final word = words[index];
-                            final current = index == _currentIndex;
-                            return AnimatedBuilder(
-                              animation: _pageController,
-                              builder: (context, child) {
-                                final page = _pageController.hasClients &&
-                                        _pageController.position.haveDimensions
-                                    ? _pageController.page ??
-                                        _currentIndex.toDouble()
-                                    : _currentIndex.toDouble();
-                                final delta = index - page;
-                                final distance = delta.abs().clamp(0.0, 1.0);
-                                final outgoing =
-                                    _pageDirection > 0 ? delta < 0 : delta > 0;
-                                final verticalOffset =
-                                    outgoing ? -24 * distance : 0.0;
-                                final rotation = outgoing
-                                    ? (_pageDirection > 0 ? -0.011 : 0.011) *
-                                        distance
-                                    : 0.0;
-                                final scale = outgoing
-                                    ? 1 - 0.006 * distance
-                                    : 1 - 0.01 * distance;
-                                final opacity =
-                                    outgoing ? 1.0 : 1 - 0.035 * distance;
-                                return Transform.translate(
-                                  key: ValueKey(
-                                    'swipe-transform-${word.id}',
-                                  ),
-                                  offset: Offset(0, verticalOffset),
-                                  child: Transform.rotate(
-                                    key: ValueKey(
-                                      'swipe-rotation-${word.id}',
-                                    ),
-                                    angle: rotation,
-                                    alignment: Alignment.bottomCenter,
-                                    child: Transform.scale(
-                                      scale: scale,
-                                      child: Opacity(
-                                        opacity: opacity,
-                                        child: child,
+                        card: Transform.translate(
+                          offset: Offset(0, -12 * sheetProgress),
+                          child: AnimatedScale(
+                            key: const ValueKey('detail-card-sheet-scale'),
+                            scale: 1 - 0.12 * sheetProgress,
+                            duration: AppMotion.fast,
+                            curve: Curves.easeOutCubic,
+                            child: PageView.builder(
+                              key: const ValueKey(
+                                'word-card-page-view',
+                              ),
+                              controller: _pageController,
+                              clipBehavior: Clip.none,
+                              physics: const PageScrollPhysics(),
+                              itemCount: words.length,
+                              onPageChanged: _onPageChanged,
+                              itemBuilder: (context, index) {
+                                final word = words[index];
+                                final current = index == _currentIndex;
+                                return AnimatedBuilder(
+                                  animation: _pageController,
+                                  builder: (context, child) {
+                                    final page = _pageController.hasClients &&
+                                            _pageController
+                                                .position.haveDimensions
+                                        ? _pageController.page ??
+                                            _currentIndex.toDouble()
+                                        : _currentIndex.toDouble();
+                                    final delta = index - page;
+                                    final distance =
+                                        delta.abs().clamp(0.0, 1.0);
+                                    final outgoing = _pageDirection > 0
+                                        ? delta < 0
+                                        : delta > 0;
+                                    final verticalOffset =
+                                        outgoing ? -24 * distance : 0.0;
+                                    final rotation = outgoing
+                                        ? (_pageDirection > 0
+                                                ? -0.011
+                                                : 0.011) *
+                                            distance
+                                        : 0.0;
+                                    final scale = outgoing
+                                        ? 1 - 0.006 * distance
+                                        : 1 - 0.01 * distance;
+                                    final opacity =
+                                        outgoing ? 1.0 : 1 - 0.035 * distance;
+                                    return Transform.translate(
+                                      key: ValueKey(
+                                        'swipe-transform-${word.id}',
+                                      ),
+                                      offset: Offset(0, verticalOffset),
+                                      child: Transform.rotate(
+                                        key: ValueKey(
+                                          'swipe-rotation-${word.id}',
+                                        ),
+                                        angle: rotation,
+                                        alignment: Alignment.bottomCenter,
+                                        child: Transform.scale(
+                                          scale: scale,
+                                          child: Opacity(
+                                            opacity: opacity,
+                                            child: child,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: GestureDetector(
+                                    key: current
+                                        ? const ValueKey(
+                                            'word-card-vertical-gesture',
+                                          )
+                                        : null,
+                                    behavior: HitTestBehavior.translucent,
+                                    onVerticalDragStart: current
+                                        ? _onCardVerticalDragStart
+                                        : null,
+                                    onVerticalDragUpdate: current
+                                        ? _onCardVerticalDragUpdate
+                                        : null,
+                                    onVerticalDragEnd:
+                                        current ? _onCardVerticalDragEnd : null,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 8,
+                                      ),
+                                      child: WordRhythmCard(
+                                        word: word,
+                                        isCurrent: current,
+                                        playing:
+                                            current && _pronunciation.playing,
+                                        activeSyllable: current
+                                            ? _pronunciation.activeSyllable
+                                            : -1,
+                                        playbackProgress: current
+                                            ? _pronunciation.progress
+                                            : 0,
+                                        rhythmRevealed:
+                                            current && _rhythmRevealed,
+                                        flipped: current && _flipped,
+                                        onFlip: current
+                                            ? () => setState(
+                                                  () => _flipped = !_flipped,
+                                                )
+                                            : () {},
+                                        onPlay: current ? _playCurrent : () {},
+                                        onFavorite: () => widget.repository
+                                            .toggleFavorite(word.id),
                                       ),
                                     ),
                                   ),
                                 );
                               },
-                              child: GestureDetector(
-                                key: current
-                                    ? const ValueKey(
-                                        'word-card-vertical-gesture',
-                                      )
-                                    : null,
-                                behavior: HitTestBehavior.translucent,
-                                onVerticalDragUpdate:
-                                    current ? _onCardVerticalDragUpdate : null,
-                                onVerticalDragEnd:
-                                    current ? _onCardVerticalDragEnd : null,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 8,
-                                  ),
-                                  child: WordRhythmCard(
-                                    word: word,
-                                    isCurrent: current,
-                                    playing: current && _pronunciation.playing,
-                                    activeSyllable: current
-                                        ? _pronunciation.activeSyllable
-                                        : -1,
-                                    playbackProgress:
-                                        current ? _pronunciation.progress : 0,
-                                    rhythmRevealed: current && _rhythmRevealed,
-                                    flipped: current && _flipped,
-                                    onFlip: current
-                                        ? () => setState(
-                                              () => _flipped = !_flipped,
-                                            )
-                                        : () {},
-                                    onPlay: current ? _playCurrent : () {},
-                                    onFavorite: () => widget.repository
-                                        .toggleFavorite(word.id),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: _RhythmControlSheet(
-                        playing: _pronunciation.playing,
-                        speed: _pronunciation.speed,
-                        intensity: _intensity,
-                        onSpeedChanged: _pronunciation.setSpeed,
-                        onIntensityChanged: (value) =>
-                            setState(() => _intensity = value),
-                        onPractice: _openSpeakPractice,
-                        onPlay: _playCurrent,
                       ),
                     ),
                   ],
@@ -420,6 +489,7 @@ class _RhythmControlSheet extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 32),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(

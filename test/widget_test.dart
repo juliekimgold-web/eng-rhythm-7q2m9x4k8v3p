@@ -431,6 +431,7 @@ void main() {
     );
 
     expect(find.text('1 / 6  ·  좌우로 넘겨 다음 단어 보기'), findsOneWidget);
+    expect(find.text('위로 밀어 리듬 조정'), findsOneWidget);
     expect(
       find.widgetWithText(FilledButton, '발음과 진동 재생').hitTestable(),
       findsNothing,
@@ -459,19 +460,15 @@ void main() {
     expect(find.text('2 / 6  ·  좌우로 넘겨 다음 단어 보기'), findsOneWidget);
 
     await tester.drag(
-      find.byKey(const ValueKey('word-card-page-view')),
-      const Offset(0, -620),
+      find.byKey(const ValueKey('word-card-vertical-gesture')),
+      const Offset(0, -96),
     );
     await tester.pumpAndSettle();
-    final pinnedScale = tester.widget<Transform>(
-      find.byKey(const ValueKey('pinned-card-scale')),
+    final sheetScale = tester.widget<AnimatedScale>(
+      find.byKey(const ValueKey('detail-card-sheet-scale')),
     );
-    final collapsedScale = pinnedScale.transform.storage[0];
-    expect(collapsedScale, greaterThanOrEqualTo(0.86));
-    expect(
-      collapsedScale,
-      lessThan(1),
-    );
+    expect(sheetScale.scale, 0.88);
+    expect(find.byKey(const ValueKey('rhythm-control-sheet')), findsOneWidget);
     expect(
       find.text('리듬 조정').hitTestable(),
       findsOneWidget,
@@ -499,7 +496,7 @@ void main() {
       ),
     );
 
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -520));
+    await tester.tap(find.byKey(const ValueKey('rhythm-sheet-handle')));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(OutlinedButton, '말해보기'));
     await tester.pumpAndSettle();
