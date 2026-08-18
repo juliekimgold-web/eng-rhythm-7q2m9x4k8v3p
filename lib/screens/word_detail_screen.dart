@@ -596,8 +596,8 @@ class _SpeakPracticeSheetState extends State<_SpeakPracticeSheet> {
                 const SizedBox(height: 10),
                 Text(
                   widget.word.syllables.join(' · '),
-                  style: TextStyle(
-                    color: widget.word.color,
+                  style: const TextStyle(
+                    color: AppColors.orange,
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                   ),
