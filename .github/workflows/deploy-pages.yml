@@ -36,7 +36,7 @@ jobs:
         run: flutter test
 
       - name: Build web app
-        run: flutter build web --release --base-href "/eng-flutter-app/"
+        run: flutter build web --release --base-href "/eng-rhythm-7q2m9x4k8v3p/"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

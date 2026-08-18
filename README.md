@@ -1,6 +1,6 @@
 # -ENG
 
-최신 웹 앱: https://juliekimgold-web.github.io/eng-flutter-app/
+최신 웹 앱: https://juliekimgold-web.github.io/eng-rhythm-7q2m9x4k8v3p/
 
 일상의 소리를 영어 리듬으로 바꾸고, 시각·청각·촉각으로 익히는 Flutter 앱 프로토타입입니다.
 
