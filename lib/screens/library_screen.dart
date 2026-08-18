@@ -158,8 +158,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 36),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(AppRadii.card),
+                        boxShadow: AppShadows.card,
                       ),
                       child: Text(
                         showingCalendar
@@ -219,26 +220,38 @@ class _LibraryFilterTab extends StatelessWidget {
       button: true,
       selected: selected,
       child: Material(
-        color: selected ? AppColors.orange : AppColors.surface,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppRadii.control),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           key: ValueKey('library-filter-$label'),
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadii.control),
-          child: Container(
+          child: SizedBox(
             height: AppControlSize.compactHeight,
-            constraints: const BoxConstraints(minWidth: 56),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppControlSize.compactHorizontalPadding,
-            ),
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: selected ? AppColors.ink : AppColors.inkSoft,
-                  ),
+            child: Center(
+              child: AnimatedContainer(
+                key: ValueKey('library-filter-visual-$label'),
+                duration: AppMotion.base,
+                height: AppControlSize.compactVisualHeight,
+                constraints: const BoxConstraints(minWidth: 52),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppControlSize.compactHorizontalPadding,
+                ),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.orange : Colors.white,
+                  borderRadius: BorderRadius.circular(AppRadii.small),
+                  boxShadow: AppShadows.control,
+                ),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: selected ? AppColors.ink : AppColors.inkSoft,
+                      ),
+                ),
+              ),
             ),
           ),
         ),
@@ -258,8 +271,9 @@ class _LibraryModeSwitch extends StatelessWidget {
     return Container(
       height: AppControlSize.compactHeight,
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadii.control),
+        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: ['갤러리', '수집 기록'].map((label) {
@@ -495,8 +509,9 @@ class _LibraryWordCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             SoundLengthPattern(
+                              key: ValueKey('library-rhythm-${word.id}'),
                               lengths: word.syllableDurations,
-                              color: AppColors.orange,
+                              color: word.color,
                               emphasisIndex: word.stressIndex,
                               height: 8,
                               gap: 3,
@@ -505,7 +520,7 @@ class _LibraryWordCard extends StatelessWidget {
                             Text(
                               '${word.rhythmBeats}박자',
                               style: const TextStyle(
-                                color: AppColors.orangeDark,
+                                color: AppColors.inkSoft,
                                 fontSize: AppTypeScale.caption,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -577,9 +592,8 @@ class _LibraryWordCard extends StatelessWidget {
                           word.isFavorite
                               ? Icons.favorite_rounded
                               : Icons.favorite_border_rounded,
-                          color: word.isFavorite
-                              ? AppColors.orange
-                              : AppColors.inkSoft,
+                          color:
+                              word.isFavorite ? word.color : AppColors.inkSoft,
                         ),
                       ),
                     ],

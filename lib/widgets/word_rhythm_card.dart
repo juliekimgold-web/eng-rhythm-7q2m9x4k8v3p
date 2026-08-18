@@ -132,7 +132,7 @@ class WordRhythmCard extends StatelessWidget {
                                   : Icons.favorite_border_rounded,
                               size: 19,
                               color: word.isFavorite
-                                  ? AppColors.orange
+                                  ? word.color
                                   : AppColors.inkSoft,
                             ),
                           ),
@@ -204,8 +204,9 @@ class _CardFront extends StatelessWidget {
           FractionallySizedBox(
             widthFactor: 0.76,
             child: SoundLengthPattern(
+              key: ValueKey('word-rhythm-${word.id}'),
               lengths: word.syllableDurations,
-              color: AppColors.orange,
+              color: word.color,
               activeIndex: playing ? activeSyllable : -1,
               emphasisIndex: word.stressIndex,
               progress: playing ? playbackProgress : null,
@@ -310,7 +311,7 @@ class _PronunciationRhythm extends StatelessWidget {
                               ),
                               duration: AppMotion.fast,
                               style: TextStyle(
-                                color: AppColors.orange.withValues(
+                                color: word.color.withValues(
                                   alpha: opacity,
                                 ),
                                 fontSize: 20,
@@ -325,7 +326,7 @@ class _PronunciationRhythm extends StatelessWidget {
                               margin: EdgeInsets.symmetric(
                                 horizontal: stressed ? 2 : 12,
                               ),
-                              color: AppColors.orange.withValues(
+                              color: word.color.withValues(
                                 alpha: opacity,
                               ),
                             ),
@@ -361,7 +362,7 @@ class _PronunciationRhythm extends StatelessWidget {
               word.word,
               key: const ValueKey('unseparated-word-rhythm'),
               style: TextStyle(
-                color: AppColors.orange.withValues(alpha: 0.86),
+                color: word.color.withValues(alpha: 0.86),
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
               ),
@@ -405,8 +406,8 @@ class _CardBack extends StatelessWidget {
           const Spacer(),
           Text(
             word.syllables.join(' · '),
-            style: const TextStyle(
-              color: AppColors.orange,
+            style: TextStyle(
+              color: word.color,
               fontSize: 25,
               fontWeight: FontWeight.w800,
             ),

@@ -57,9 +57,10 @@ abstract final class AppTypeScale {
 abstract final class AppControlSize {
   static const buttonHeight = 52.0;
   static const compactHeight = 44.0;
+  static const compactVisualHeight = 36.0;
   static const minTouchTarget = 44.0;
   static const buttonHorizontalPadding = 16.0;
-  static const compactHorizontalPadding = 14.0;
+  static const compactHorizontalPadding = 12.0;
   static const contentGap = 8.0;
 }
 
@@ -295,7 +296,7 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: Colors.white,
         hintStyle: const TextStyle(color: Color(0xFF9C9894)),
         prefixIconColor: AppColors.inkSoft,
         contentPadding: const EdgeInsets.symmetric(

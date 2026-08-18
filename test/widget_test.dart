@@ -253,14 +253,29 @@ void main() {
     await tester.pumpAndSettle();
 
     final tab = find.byKey(const ValueKey('library-filter-전체'));
+    final visual = find.byKey(const ValueKey('library-filter-visual-전체'));
     final label = find.descendant(of: tab, matching: find.text('전체'));
 
     expect(tester.getSize(tab).height, AppControlSize.compactHeight);
+    expect(
+      tester.getSize(visual).height,
+      AppControlSize.compactVisualHeight,
+    );
     expect(
       (tester.getCenter(tab).dy - tester.getCenter(label).dy).abs(),
       lessThan(1),
     );
     expect(Theme.of(tester.element(tab)).hoverColor, Colors.transparent);
+
+    final laundry = tester.widget<SoundLengthPattern>(
+      find.byKey(const ValueKey('library-rhythm-laundry')),
+    );
+    final everyday = tester.widget<SoundLengthPattern>(
+      find.byKey(const ValueKey('library-rhythm-everyday')),
+    );
+    expect(laundry.color, AppColors.yellow);
+    expect(everyday.color, AppColors.lavender);
+    expect(laundry.color, isNot(everyday.color));
   });
 
   testWidgets('capture shows duration extraction before word matching',
@@ -317,7 +332,7 @@ void main() {
     var activeSyllable = tester.widget<AnimatedDefaultTextStyle>(
       find.byKey(const ValueKey('syllable-laun')),
     );
-    expect(activeSyllable.style.color, AppColors.orange);
+    expect(activeSyllable.style.color, sampleWords.first.color);
     expect(find.byKey(const ValueKey('rhythm-whoosh')), findsOneWidget);
     expect(
       tester.widget(find.byKey(const ValueKey('rhythm-whoosh'))),
@@ -343,7 +358,7 @@ void main() {
     activeSyllable = tester.widget<AnimatedDefaultTextStyle>(
       find.byKey(const ValueKey('syllable-dree')),
     );
-    expect(activeSyllable.style.color, AppColors.orange);
+    expect(activeSyllable.style.color, sampleWords.first.color);
     final secondSyllableProgress = tester
         .widget<SoundLengthPattern>(find.byType(SoundLengthPattern).first)
         .progress!;

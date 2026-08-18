@@ -567,8 +567,9 @@ class _ReviewWordRow extends StatelessWidget {
             SizedBox(
               width: 78,
               child: SoundLengthPattern(
+                key: ValueKey('review-rhythm-${word.id}'),
                 lengths: word.syllableDurations,
-                color: AppColors.orange,
+                color: word.color,
                 height: 5,
                 gap: 4,
               ),
@@ -824,8 +825,9 @@ class _TodayRhythmCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: SoundLengthPattern(
+                      key: ValueKey('recent-rhythm-${word.id}'),
                       lengths: word.syllableDurations,
-                      color: AppColors.orange,
+                      color: word.color,
                       height: 8,
                       gap: 7,
                     ),
@@ -838,9 +840,9 @@ class _TodayRhythmCard extends StatelessWidget {
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(AppRadii.control),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.volume_up_rounded,
-                      color: AppColors.orange,
+                      color: word.color,
                       size: 20,
                     ),
                   ),
@@ -916,8 +918,8 @@ class _RecentWordCard extends StatelessWidget {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.orange,
+                      decoration: BoxDecoration(
+                        color: word.color,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -955,8 +957,9 @@ class _RecentWordCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 SoundLengthPattern(
+                  key: ValueKey('mini-rhythm-${word.id}'),
                   lengths: word.syllableDurations,
-                  color: AppColors.orange,
+                  color: word.color,
                   height: 6,
                   gap: 4,
                 ),
