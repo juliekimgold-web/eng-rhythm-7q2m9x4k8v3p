@@ -63,8 +63,8 @@ class WordRhythmCard extends StatelessWidget {
                   key: ValueKey('word-card-${word.id}'),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(color: AppColors.line),
                     borderRadius: BorderRadius.circular(AppRadii.card),
+                    boxShadow: AppShadows.card,
                   ),
                   child: Stack(
                     children: [
@@ -100,7 +100,6 @@ class WordRhythmCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(
                                 AppRadii.control,
                               ),
-                              side: const BorderSide(color: AppColors.line),
                             ),
                             child: IconButton(
                               key: ValueKey('card-play-${word.id}'),
@@ -179,18 +178,23 @@ class _CardFront extends StatelessWidget {
                 'No.${word.cardNumber.toString().padLeft(2, '0')}',
                 style: const TextStyle(
                   color: AppColors.inkSoft,
-                  fontSize: 12,
+                  fontSize: AppTypeScale.caption,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Spacer(),
-              Text(
-                '${word.rhythmBeats} SYLLABLES',
-                style: const TextStyle(
-                  color: AppColors.inkSoft,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.7,
+              Expanded(
+                child: Text(
+                  '${word.rhythmBeats} SYLLABLES',
+                  maxLines: 1,
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
+                  style: const TextStyle(
+                    color: AppColors.inkSoft,
+                    fontSize: AppTypeScale.caption,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.7,
+                  ),
                 ),
               ),
               const SizedBox(width: 92),
@@ -247,7 +251,10 @@ class _CardFront extends StatelessWidget {
               SizedBox(width: 6),
               Text(
                 '좌우로 넘기기  ·  탭하여 상세 보기',
-                style: TextStyle(color: AppColors.inkSoft, fontSize: 10),
+                style: TextStyle(
+                  color: AppColors.inkSoft,
+                  fontSize: AppTypeScale.caption,
+                ),
               ),
             ],
           ),
@@ -328,7 +335,7 @@ class _PronunciationRhythm extends StatelessWidget {
                               maxLines: 1,
                               style: const TextStyle(
                                 color: AppColors.inkSoft,
-                                fontSize: 9,
+                                fontSize: AppTypeScale.caption,
                               ),
                             ),
                           ],
@@ -381,7 +388,7 @@ class _CardBack extends StatelessWidget {
                 'RHYTHM NOTE',
                 style: TextStyle(
                   color: AppColors.inkSoft,
-                  fontSize: 10,
+                  fontSize: AppTypeScale.caption,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.9,
                 ),
@@ -420,7 +427,7 @@ class _CardBack extends StatelessWidget {
             'EXAMPLE',
             style: TextStyle(
               color: AppColors.inkSoft,
-              fontSize: 9,
+              fontSize: AppTypeScale.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
             ),
@@ -440,7 +447,10 @@ class _CardBack extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               '카드를 눌러 앞면 보기',
-              style: TextStyle(color: AppColors.inkSoft, fontSize: 10),
+              style: TextStyle(
+                color: AppColors.inkSoft,
+                fontSize: AppTypeScale.caption,
+              ),
             ),
           ),
         ],

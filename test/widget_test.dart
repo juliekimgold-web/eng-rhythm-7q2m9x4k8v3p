@@ -241,6 +241,28 @@ void main() {
     expect(find.text('1개 수집'), findsOneWidget);
   });
 
+  testWidgets('library filters use centered mobile tap targets',
+      (tester) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const EngApp());
+    await tester.tap(find.text('라이브러리'));
+    await tester.pumpAndSettle();
+
+    final tab = find.byKey(const ValueKey('library-filter-전체'));
+    final label = find.descendant(of: tab, matching: find.text('전체'));
+
+    expect(tester.getSize(tab).height, AppControlSize.compactHeight);
+    expect(
+      (tester.getCenter(tab).dy - tester.getCenter(label).dy).abs(),
+      lessThan(1),
+    );
+    expect(Theme.of(tester.element(tab)).hoverColor, Colors.transparent);
+  });
+
   testWidgets('capture shows duration extraction before word matching',
       (tester) async {
     await tester.pumpWidget(const EngApp());

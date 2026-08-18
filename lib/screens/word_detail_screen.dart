@@ -140,7 +140,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: AppColors.inkSoft,
-                            fontSize: 11,
+                            fontSize: AppTypeScale.caption,
                           ),
                         ),
                         card: PageView.builder(
@@ -246,17 +246,6 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                                 flex: 4,
                                 child: OutlinedButton.icon(
                                   onPressed: _openSpeakPractice,
-                                  style: OutlinedButton.styleFrom(
-                                    minimumSize: const Size.fromHeight(54),
-                                    side: const BorderSide(
-                                      color: AppColors.line,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadii.control,
-                                      ),
-                                    ),
-                                  ),
                                   icon: const Icon(Icons.mic_none_rounded),
                                   label: const Text('말해보기'),
                                 ),
@@ -643,16 +632,6 @@ class _SpeakPracticeSheetState extends State<_SpeakPracticeSheet> {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () => _showFeedback('내 발음을 재생합니다.'),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(46),
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            side: const BorderSide(color: AppColors.line),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadii.control,
-                              ),
-                            ),
-                          ),
                           icon: const Icon(Icons.play_arrow_rounded),
                           label: const Text('내 발음 듣기'),
                         ),
@@ -661,16 +640,6 @@ class _SpeakPracticeSheetState extends State<_SpeakPracticeSheet> {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () => _showFeedback('원어민 발음을 재생합니다.'),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(46),
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            side: const BorderSide(color: AppColors.line),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadii.control,
-                              ),
-                            ),
-                          ),
                           icon: const Icon(Icons.volume_up_outlined),
                           label: const Text('원어민 발음'),
                         ),
@@ -682,9 +651,6 @@ class _SpeakPracticeSheetState extends State<_SpeakPracticeSheet> {
                     width: double.infinity,
                     child: FilledButton.icon(
                       onPressed: _toggleRecording,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                      ),
                       icon: const Icon(Icons.mic_none_rounded),
                       label: const Text('다시 말해보기'),
                     ),

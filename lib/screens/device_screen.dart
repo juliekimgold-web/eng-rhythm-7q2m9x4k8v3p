@@ -113,12 +113,6 @@ class _DeviceScreenState extends State<DeviceScreen> {
                     );
                   }
                 : null,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(54),
-              side: const BorderSide(color: AppColors.line),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadii.control)),
-            ),
             icon: const Icon(Icons.play_circle_outline_rounded),
             label: const Text('진동 패턴 테스트'),
           ),

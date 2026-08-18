@@ -874,9 +874,6 @@ class _DeviceSetupOverlay extends StatelessWidget {
                     child: FilledButton(
                       key: const ValueKey('lens-ready-button'),
                       onPressed: onReady,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
-                      ),
                       child: const Text('확인했습니다'),
                     ),
                   ),
@@ -1099,8 +1096,10 @@ class _LiveFeedback extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style:
-                      const TextStyle(fontSize: 11, color: AppColors.inkSoft),
+                  style: const TextStyle(
+                    fontSize: AppTypeScale.caption,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ],
             ),

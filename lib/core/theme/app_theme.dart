@@ -45,6 +45,42 @@ abstract final class AppSpacing {
   static const xxl = 48.0;
 }
 
+abstract final class AppTypeScale {
+  static const navigation = 11.0;
+  static const caption = 12.0;
+  static const compactLabel = 13.0;
+  static const label = 14.0;
+  static const body = 14.0;
+  static const bodyLarge = 16.0;
+}
+
+abstract final class AppControlSize {
+  static const buttonHeight = 52.0;
+  static const compactHeight = 44.0;
+  static const minTouchTarget = 44.0;
+  static const buttonHorizontalPadding = 16.0;
+  static const compactHorizontalPadding = 14.0;
+  static const contentGap = 8.0;
+}
+
+abstract final class AppShadows {
+  static const card = <BoxShadow>[
+    BoxShadow(
+      color: Color(0x10000000),
+      blurRadius: 12,
+      offset: Offset(0, 3),
+    ),
+  ];
+
+  static const control = <BoxShadow>[
+    BoxShadow(
+      color: Color(0x0D000000),
+      blurRadius: 6,
+      offset: Offset(0, 2),
+    ),
+  ];
+}
+
 abstract final class AppMotion {
   static const fast = Duration(milliseconds: 120);
   static const base = Duration(milliseconds: 180);
@@ -53,6 +89,14 @@ abstract final class AppMotion {
 }
 
 abstract final class AppTheme {
+  static Color? _mobileOverlay(Set<WidgetState> states) {
+    if (states.contains(WidgetState.hovered)) return Colors.transparent;
+    if (states.contains(WidgetState.pressed)) {
+      return AppColors.ink.withValues(alpha: 0.08);
+    }
+    return null;
+  }
+
   static ThemeData get light {
     const scheme = ColorScheme.light(
       primary: AppColors.orange,
@@ -68,6 +112,11 @@ abstract final class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: Colors.white,
       fontFamily: 'Pretendard',
+      hoverColor: Colors.transparent,
+      splashColor: AppColors.ink.withValues(alpha: 0.06),
+      highlightColor: AppColors.ink.withValues(alpha: 0.04),
+      visualDensity: VisualDensity.standard,
+      materialTapTargetSize: MaterialTapTargetSize.padded,
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           fontSize: 28,
@@ -100,25 +149,44 @@ abstract final class AppTheme {
           letterSpacing: -0.2,
         ),
         bodyMedium: TextStyle(
-          fontSize: 14,
+          fontSize: AppTypeScale.body,
           height: 1.5,
           fontWeight: FontWeight.w400,
           letterSpacing: -0.15,
         ),
+        bodySmall: TextStyle(
+          fontSize: AppTypeScale.caption,
+          height: 1.5,
+          fontWeight: FontWeight.w400,
+          letterSpacing: -0.1,
+        ),
         labelLarge: TextStyle(
-          fontSize: 14,
+          fontSize: AppTypeScale.label,
           height: 1.43,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.1,
         ),
+        labelMedium: TextStyle(
+          fontSize: AppTypeScale.compactLabel,
+          height: 1.38,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.1,
+        ),
+        labelSmall: TextStyle(
+          fontSize: AppTypeScale.caption,
+          height: 1.33,
+          fontWeight: FontWeight.w500,
+          letterSpacing: -0.05,
+        ),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
-        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: const Color(0x18000000),
+        elevation: 1,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
-          side: const BorderSide(color: AppColors.line),
         ),
       ),
       dividerTheme: const DividerThemeData(
@@ -128,45 +196,78 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(54),
+          minimumSize: const Size.fromHeight(AppControlSize.buttonHeight),
           foregroundColor: AppColors.ink,
           backgroundColor: AppColors.orange,
           disabledForegroundColor: AppColors.inkSoft,
           disabledBackgroundColor: AppColors.surfaceMuted,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppControlSize.buttonHorizontalPadding,
+          ),
+          alignment: Alignment.center,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.control),
           ),
           textStyle: const TextStyle(
             fontFamily: 'Pretendard',
-            fontSize: 14,
+            fontSize: AppTypeScale.label,
+            height: 1.43,
             fontWeight: FontWeight.w600,
           ),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith(_mobileOverlay),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.ink,
-          minimumSize: const Size.fromHeight(54),
+          backgroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(AppControlSize.buttonHeight),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppControlSize.buttonHorizontalPadding,
+          ),
+          alignment: Alignment.center,
           side: const BorderSide(color: AppColors.line),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.control),
           ),
           textStyle: const TextStyle(
             fontFamily: 'Pretendard',
-            fontSize: 14,
+            fontSize: AppTypeScale.label,
+            height: 1.43,
             fontWeight: FontWeight.w600,
           ),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith(_mobileOverlay),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.inkSoft,
-          minimumSize: const Size(44, 44),
+          minimumSize: const Size(
+            AppControlSize.minTouchTarget,
+            AppControlSize.compactHeight,
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppControlSize.compactHorizontalPadding,
+          ),
+          alignment: Alignment.center,
           textStyle: const TextStyle(
             fontFamily: 'Pretendard',
-            fontSize: 14,
+            fontSize: AppTypeScale.label,
+            height: 1.43,
             fontWeight: FontWeight.w600,
           ),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith(_mobileOverlay),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          minimumSize: const Size.square(AppControlSize.minTouchTarget),
+          padding: const EdgeInsets.all(10),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith(_mobileOverlay),
         ),
       ),
       appBarTheme: const AppBarTheme(
@@ -188,17 +289,19 @@ abstract final class AppTheme {
         contentTextStyle: TextStyle(
           color: Colors.white,
           fontFamily: 'Pretendard',
-          fontSize: 14,
+          fontSize: AppTypeScale.body,
         ),
         behavior: SnackBarBehavior.floating,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         hintStyle: const TextStyle(color: Color(0xFF9C9894)),
         prefixIconColor: AppColors.inkSoft,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppControlSize.buttonHorizontalPadding,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.control),
           borderSide: const BorderSide(color: AppColors.line),

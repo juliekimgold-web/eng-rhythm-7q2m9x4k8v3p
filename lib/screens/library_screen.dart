@@ -114,42 +114,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       ),
                       const SizedBox(height: 14),
                       SizedBox(
-                        height: 42,
+                        height: AppControlSize.compactHeight,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
                           children: ['전체', '즐겨찾기', '2박자', '3박자'].map((filter) {
-                            final selected = _filter == filter;
                             return Padding(
                               padding: const EdgeInsets.only(right: 8),
-                              child: InkWell(
+                              child: _LibraryFilterTab(
+                                label: filter,
+                                selected: _filter == filter,
                                 onTap: () => setState(() => _filter = filter),
-                                borderRadius:
-                                    BorderRadius.circular(AppRadii.small),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 180),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: selected
-                                        ? AppColors.orange
-                                        : Colors.white,
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadii.small),
-                                    border: Border.all(color: AppColors.line),
-                                  ),
-                                  child: Text(
-                                    filter,
-                                    style: TextStyle(
-                                      color: selected
-                                          ? AppColors.ink
-                                          : AppColors.inkSoft,
-                                      fontWeight: FontWeight.w600,
-                                      height: 1,
-                                    ),
-                                  ),
-                                ),
                               ),
                             );
                           }).toList(),
@@ -184,8 +158,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 36),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: AppColors.line),
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(AppRadii.card),
                       ),
                       child: Text(
@@ -229,6 +202,51 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 }
 
+class _LibraryFilterTab extends StatelessWidget {
+  const _LibraryFilterTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: selected ? AppColors.orange : AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.control),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          key: ValueKey('library-filter-$label'),
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadii.control),
+          child: Container(
+            height: AppControlSize.compactHeight,
+            constraints: const BoxConstraints(minWidth: 56),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppControlSize.compactHorizontalPadding,
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: selected ? AppColors.ink : AppColors.inkSoft,
+                  ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _LibraryModeSwitch extends StatelessWidget {
   const _LibraryModeSwitch({required this.value, required this.onChanged});
 
@@ -238,8 +256,7 @@ class _LibraryModeSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
-      padding: const EdgeInsets.all(4),
+      height: AppControlSize.compactHeight,
       decoration: BoxDecoration(
         color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(AppRadii.control),
@@ -254,13 +271,12 @@ class _LibraryModeSwitch extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadii.small),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
+                margin: const EdgeInsets.all(4),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: selected ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(AppRadii.small),
-                  border: selected
-                      ? Border.all(color: AppColors.line)
-                      : Border.all(color: Colors.transparent),
+                  boxShadow: selected ? AppShadows.control : null,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -278,8 +294,9 @@ class _LibraryModeSwitch extends StatelessWidget {
                       label,
                       style: TextStyle(
                         color: selected ? AppColors.ink : AppColors.inkSoft,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        fontSize: AppTypeScale.compactLabel,
+                        height: 1.38,
                       ),
                     ),
                   ],
@@ -323,6 +340,7 @@ class _CollectionCalendar extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadii.card),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         children: [
@@ -356,7 +374,7 @@ class _CollectionCalendar extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: AppColors.inkSoft,
-                          fontSize: 11,
+                          fontSize: AppTypeScale.caption,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -454,9 +472,10 @@ class _LibraryWordCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
+      elevation: 1,
+      shadowColor: const Color(0x18000000),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.card),
-        side: const BorderSide(color: AppColors.line),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -487,7 +506,7 @@ class _LibraryWordCard extends StatelessWidget {
                               '${word.rhythmBeats}박자',
                               style: const TextStyle(
                                 color: AppColors.orangeDark,
-                                fontSize: 10,
+                                fontSize: AppTypeScale.caption,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -513,7 +532,7 @@ class _LibraryWordCard extends StatelessWidget {
                                 Text(
                                   word.phonetic,
                                   style: const TextStyle(
-                                    fontSize: 11,
+                                    fontSize: AppTypeScale.caption,
                                     color: AppColors.inkSoft,
                                   ),
                                 ),
@@ -534,7 +553,7 @@ class _LibraryWordCard extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       color: AppColors.inkSoft,
-                                      fontSize: 11,
+                                      fontSize: AppTypeScale.caption,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -544,7 +563,7 @@ class _LibraryWordCard extends StatelessWidget {
                                     _timeLabel(word.collectedAt),
                                     style: const TextStyle(
                                       color: AppColors.inkSoft,
-                                      fontSize: 10,
+                                      fontSize: AppTypeScale.caption,
                                     ),
                                   ),
                               ],

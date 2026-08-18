@@ -104,7 +104,10 @@ class _DevicePill extends StatelessWidget {
           Icon(Icons.circle, color: Color(0xFF5BCB63), size: 8),
           SizedBox(width: 6),
           Text('디바이스 연결됨',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+              style: TextStyle(
+                fontSize: AppTypeScale.caption,
+                fontWeight: FontWeight.w700,
+              )),
         ],
       ),
     );
@@ -215,13 +218,6 @@ class _ListeningState extends StatelessWidget {
         const Spacer(),
         OutlinedButton.icon(
           onPressed: onStop,
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(54),
-            side: const BorderSide(color: AppColors.line),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadii.control),
-            ),
-          ),
           icon: const Icon(Icons.stop_rounded),
           label: const Text('여기까지 분석하기'),
         ),
@@ -300,7 +296,10 @@ class _PatternState extends StatelessWidget {
               ),
               SizedBox(height: 17),
               Text('짧게  ·  길게  ·  짧게  ·  길게  ·  짧게',
-                  style: TextStyle(color: AppColors.inkSoft, fontSize: 11)),
+                  style: TextStyle(
+                    color: AppColors.inkSoft,
+                    fontSize: AppTypeScale.caption,
+                  )),
             ],
           ),
         ),
@@ -348,8 +347,10 @@ class _MatchingState extends StatelessWidget {
                   SizedBox(
                     width: 68,
                     child: Text('소리 패턴',
-                        style:
-                            TextStyle(color: AppColors.inkSoft, fontSize: 11)),
+                        style: TextStyle(
+                          color: AppColors.inkSoft,
+                          fontSize: AppTypeScale.caption,
+                        )),
                   ),
                   Expanded(
                     child: SoundLengthPattern(
@@ -368,8 +369,10 @@ class _MatchingState extends StatelessWidget {
                   SizedBox(
                     width: 68,
                     child: Text('영어 음절',
-                        style:
-                            TextStyle(color: AppColors.inkSoft, fontSize: 11)),
+                        style: TextStyle(
+                          color: AppColors.inkSoft,
+                          fontSize: AppTypeScale.caption,
+                        )),
                   ),
                   Expanded(
                     child: Row(
@@ -447,7 +450,7 @@ class _ResultState extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             color: AppColors.orangeDark,
-            fontSize: 11,
+            fontSize: AppTypeScale.caption,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.5,
           ),

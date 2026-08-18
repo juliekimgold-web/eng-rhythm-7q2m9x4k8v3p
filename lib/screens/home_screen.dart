@@ -185,7 +185,6 @@ class _HomeHeader extends StatelessWidget {
             color: AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(999),
-              side: const BorderSide(color: AppColors.line),
             ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -217,7 +216,7 @@ class _HomeHeader extends StatelessWidget {
                       '김준희',
                       style: TextStyle(
                         color: AppColors.ink,
-                        fontSize: 11,
+                        fontSize: AppTypeScale.caption,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -252,9 +251,7 @@ class _RoundAction extends StatelessWidget {
       label: semanticLabel,
       child: Material(
         color: AppColors.surface,
-        shape: const CircleBorder(
-          side: BorderSide(color: AppColors.line),
-        ),
+        shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -337,7 +334,7 @@ class _CaptureHero extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.line),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -416,7 +413,6 @@ class _CaptureGlyph extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadii.control),
-        border: Border.all(color: AppColors.line),
       ),
       child: const Icon(
         Icons.multitrack_audio_rounded,
@@ -456,7 +452,7 @@ class _DeviceStatus extends StatelessWidget {
             'ENG 디바이스 연결됨',
             style: TextStyle(
               color: AppColors.success,
-              fontSize: 11,
+              fontSize: AppTypeScale.caption,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -649,7 +645,7 @@ class _WeeklyProgressCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.line),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         children: [
@@ -706,7 +702,7 @@ class _WeeklyProgressCard extends StatelessWidget {
                       days[index],
                       style: TextStyle(
                         color: today ? AppColors.orangeDark : AppColors.inkSoft,
-                        fontSize: 11,
+                        fontSize: AppTypeScale.caption,
                         fontWeight: today ? FontWeight.w600 : FontWeight.w500,
                       ),
                     ),
@@ -762,9 +758,10 @@ class _TodayRhythmCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
+      elevation: 1,
+      shadowColor: const Color(0x18000000),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.card),
-        side: const BorderSide(color: AppColors.line),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -789,7 +786,7 @@ class _TodayRhythmCard extends StatelessWidget {
                       'NO.${word.cardNumber.toString().padLeft(2, '0')}',
                       style: const TextStyle(
                         color: AppColors.inkSoft,
-                        fontSize: 10,
+                        fontSize: AppTypeScale.caption,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.5,
                       ),
@@ -840,7 +837,6 @@ class _TodayRhythmCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(AppRadii.control),
-                      border: Border.all(color: AppColors.line),
                     ),
                     child: const Icon(
                       Icons.volume_up_rounded,
@@ -867,9 +863,10 @@ class _EmptyRhythmCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
+      elevation: 1,
+      shadowColor: const Color(0x18000000),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.card),
-        side: const BorderSide(color: AppColors.line),
       ),
       child: InkWell(
         onTap: onStartCapture,
@@ -901,9 +898,10 @@ class _RecentWordCard extends StatelessWidget {
       width: 148,
       child: Material(
         color: Colors.white,
+        elevation: 1,
+        shadowColor: const Color(0x18000000),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.line),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -928,7 +926,7 @@ class _RecentWordCard extends StatelessWidget {
                       '${word.rhythmBeats} beats',
                       style: const TextStyle(
                         color: AppColors.inkSoft,
-                        fontSize: 9,
+                        fontSize: AppTypeScale.caption,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -952,7 +950,7 @@ class _RecentWordCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AppColors.inkSoft,
-                    fontSize: 11,
+                    fontSize: AppTypeScale.caption,
                   ),
                 ),
                 const Spacer(),
@@ -981,7 +979,6 @@ class _TipCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.line),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
