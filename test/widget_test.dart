@@ -295,7 +295,7 @@ void main() {
     var activeSyllable = tester.widget<AnimatedDefaultTextStyle>(
       find.byKey(const ValueKey('syllable-laun')),
     );
-    expect(activeSyllable.style.color, sampleWords.first.color);
+    expect(activeSyllable.style.color, AppColors.orange);
     expect(find.byKey(const ValueKey('rhythm-whoosh')), findsOneWidget);
     expect(
       tester.widget(find.byKey(const ValueKey('rhythm-whoosh'))),
@@ -321,7 +321,7 @@ void main() {
     activeSyllable = tester.widget<AnimatedDefaultTextStyle>(
       find.byKey(const ValueKey('syllable-dree')),
     );
-    expect(activeSyllable.style.color, sampleWords.first.color);
+    expect(activeSyllable.style.color, AppColors.orange);
     final secondSyllableProgress = tester
         .widget<SoundLengthPattern>(find.byType(SoundLengthPattern).first)
         .progress!;
