@@ -32,6 +32,25 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  void _openSpeakPractice(BuildContext context) {
+    final recentWords = repository.recentWords;
+    if (recentWords.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('먼저 리듬을 하나 수집해 주세요.')),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => WordDetailScreen(
+          word: recentWords.first,
+          repository: repository,
+          openPracticeOnLaunch: true,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -39,31 +58,33 @@ class HomeScreen extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 104),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.page,
+              AppSpacing.sm,
+              AppSpacing.page,
+              104,
+            ),
             sliver: SliverList.list(
               children: [
                 _HomeHeader(onOpenProfile: onOpenProfile),
-                const SizedBox(height: 30),
+                const SizedBox(height: AppSpacing.lg),
                 const _Greeting(),
-                const SizedBox(height: 24),
-                _CaptureHero(onStartCapture: onStartCapture),
-                const SizedBox(height: 14),
-                _QuickActions(
+                const SizedBox(height: AppSpacing.page),
+                _CaptureHero(
                   onStartCapture: onStartCapture,
-                  onOpenLibrary: onOpenLibrary,
-                  onOpenProfile: onOpenProfile,
+                  onStartSpeaking: () => _openSpeakPractice(context),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: AppSpacing.section),
                 const _SectionTitle(
                   title: '이번 주 리듬',
                   caption: '짧게, 매일. 감각은 자연스럽게 쌓여요.',
                 ),
                 const SizedBox(height: 12),
                 const _WeeklyProgressCard(),
-                const SizedBox(height: 30),
+                const SizedBox(height: AppSpacing.section),
                 _SectionTitle(
-                  title: '오늘의 리듬',
-                  caption: '가장 최근에 만난 소리를 다시 들어보세요.',
+                  title: '최근 수집한 단어',
+                  caption: '가장 최근에 만난 리듬부터 확인해 보세요.',
                   actionLabel: '전체보기',
                   onAction: onOpenLibrary,
                 ),
@@ -106,7 +127,21 @@ class HomeScreen extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: AppSpacing.section),
+                const _SectionTitle(
+                  title: '복습이 필요한 단어',
+                  caption: '저장한 단어를 짧게 다시 익혀보세요.',
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                AnimatedBuilder(
+                  animation: repository,
+                  builder: (context, _) => _ReviewWords(
+                    words: repository.search(filter: '즐겨찾기').take(3).toList(),
+                    onOpenWord: (word) => _openWord(context, word),
+                    onOpenLibrary: onOpenLibrary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.section),
                 const _SectionTitle(
                   title: '오늘의 작은 팁',
                   caption: '한 번에 하나만 기억해도 충분해요.',
@@ -173,7 +208,7 @@ class _HomeHeader extends StatelessWidget {
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -183,7 +218,7 @@ class _HomeHeader extends StatelessWidget {
                       style: TextStyle(
                         color: AppColors.ink,
                         fontSize: 11,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -267,8 +302,8 @@ class _Greeting extends StatelessWidget {
           'TODAY · $dateLabel',
           style: const TextStyle(
             color: AppColors.inkSoft,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
             letterSpacing: 0.7,
           ),
         ),
@@ -287,17 +322,21 @@ class _Greeting extends StatelessWidget {
 }
 
 class _CaptureHero extends StatelessWidget {
-  const _CaptureHero({required this.onStartCapture});
+  const _CaptureHero({
+    required this.onStartCapture,
+    required this.onStartSpeaking,
+  });
 
   final VoidCallback onStartCapture;
+  final VoidCallback onStartSpeaking;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      padding: const EdgeInsets.all(AppSpacing.page),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.line),
       ),
       child: Column(
@@ -310,12 +349,11 @@ class _CaptureHero extends StatelessWidget {
               _CaptureGlyph(),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.page),
           Text(
-            '소리를 켜면\n영어가 들리기 시작해요',
+            '일상의 소리를\n영어 리듬으로 바꿔보세요',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontSize: 24,
-                  height: 1.25,
+                  height: 1.32,
                   letterSpacing: -0.65,
                 ),
           ),
@@ -328,12 +366,12 @@ class _CaptureHero extends StatelessWidget {
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.md),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadii.control),
             ),
             child: const SoundLengthPattern(
               lengths: [0.48, 1.0, 0.42, 0.9, 0.48],
@@ -342,21 +380,23 @@ class _CaptureHero extends StatelessWidget {
               gap: 6,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.md),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: onStartCapture,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.ink,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
               icon: const Icon(Icons.graphic_eq_rounded, size: 20),
               label: const Text('새 리듬 수집하기'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const ValueKey('home-speak-practice'),
+              onPressed: onStartSpeaking,
+              icon: const Icon(Icons.mic_none_rounded, size: 20),
+              label: const Text('말하기 · 발음 분석'),
             ),
           ),
         ],
@@ -371,16 +411,17 @@ class _CaptureGlyph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 48,
-      height: 48,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.cream,
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.control),
+        border: Border.all(color: AppColors.line),
       ),
       child: const Icon(
         Icons.multitrack_audio_rounded,
-        color: AppColors.orangeDark,
-        size: 23,
+        color: AppColors.orange,
+        size: 22,
       ),
     );
   }
@@ -394,9 +435,8 @@ class _DeviceStatus extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.line),
+        color: AppColors.successSoft,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
@@ -406,7 +446,7 @@ class _DeviceStatus extends StatelessWidget {
             height: 7,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Color(0xFF4CAF66),
+                color: AppColors.success,
                 shape: BoxShape.circle,
               ),
             ),
@@ -414,7 +454,11 @@ class _DeviceStatus extends StatelessWidget {
           SizedBox(width: 7),
           Text(
             'ENG 디바이스 연결됨',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: AppColors.success,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -422,100 +466,123 @@ class _DeviceStatus extends StatelessWidget {
   }
 }
 
-class _QuickActions extends StatelessWidget {
-  const _QuickActions({
-    required this.onStartCapture,
+class _ReviewWords extends StatelessWidget {
+  const _ReviewWords({
+    required this.words,
+    required this.onOpenWord,
     required this.onOpenLibrary,
-    required this.onOpenProfile,
   });
 
-  final VoidCallback onStartCapture;
+  final List<RhythmWord> words;
+  final ValueChanged<RhythmWord> onOpenWord;
   final VoidCallback onOpenLibrary;
-  final VoidCallback onOpenProfile;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _QuickActionItem(
-            icon: Icons.hearing_rounded,
-            label: '바로 듣기',
-            color: AppColors.orange,
-            onTap: onStartCapture,
+    if (words.isEmpty) {
+      return Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        child: InkWell(
+          onTap: onOpenLibrary,
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          child: const Padding(
+            padding: EdgeInsets.all(AppSpacing.page),
+            child: Row(
+              children: [
+                Icon(Icons.bookmark_border_rounded, color: AppColors.inkSoft),
+                SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    '기억하고 싶은 단어를 저장하면 여기에 모아드려요.',
+                    style: TextStyle(color: AppColors.inkSoft),
+                  ),
+                ),
+                Icon(Icons.arrow_forward_rounded, size: 20),
+              ],
+            ),
           ),
         ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: _QuickActionItem(
-            icon: Icons.bookmark_outline_rounded,
-            label: '단어 모음',
-            color: AppColors.blue,
-            onTap: onOpenLibrary,
-          ),
+      );
+    }
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.line),
+          bottom: BorderSide(color: AppColors.line),
         ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: _QuickActionItem(
-            icon: Icons.insights_rounded,
-            label: '내 학습',
-            color: AppColors.coral,
-            onTap: onOpenProfile,
-          ),
-        ),
-      ],
+      ),
+      child: Column(
+        children: List.generate(words.length, (index) {
+          final word = words[index];
+          return Column(
+            children: [
+              _ReviewWordRow(word: word, onTap: () => onOpenWord(word)),
+              if (index < words.length - 1)
+                const Divider(indent: 48, color: AppColors.line),
+            ],
+          );
+        }),
+      ),
     );
   }
 }
 
-class _QuickActionItem extends StatelessWidget {
-  const _QuickActionItem({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
+class _ReviewWordRow extends StatelessWidget {
+  const _ReviewWordRow({required this.word, required this.onTap});
 
-  final IconData icon;
-  final String label;
-  final Color color;
+  final RhythmWord word;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.line),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 13),
-          child: Column(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 19),
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: 68,
+        child: Row(
+          children: [
+            const Icon(Icons.bookmark_rounded, color: AppColors.orange),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    word.word,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    word.meaning,
+                    style: const TextStyle(
+                      color: AppColors.inkSoft,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 9),
-              Text(
-                label,
-                maxLines: 1,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
+            ),
+            SizedBox(
+              width: 78,
+              child: SoundLengthPattern(
+                lengths: word.syllableDurations,
+                color: AppColors.orange,
+                height: 5,
+                gap: 4,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.inkSoft,
+            ),
+          ],
         ),
       ),
     );
@@ -581,7 +648,7 @@ class _WeeklyProgressCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 19, 20, 18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.line),
       ),
       child: Column(
@@ -596,7 +663,7 @@ class _WeeklyProgressCard extends StatelessWidget {
                     style: TextStyle(
                       color: AppColors.ink,
                       fontSize: 26,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: -0.8,
                     ),
                   ),
@@ -640,7 +707,7 @@ class _WeeklyProgressCard extends StatelessWidget {
                       style: TextStyle(
                         color: today ? AppColors.orangeDark : AppColors.inkSoft,
                         fontSize: 11,
-                        fontWeight: today ? FontWeight.w800 : FontWeight.w500,
+                        fontWeight: today ? FontWeight.w600 : FontWeight.w500,
                       ),
                     ),
                   ],
@@ -662,8 +729,9 @@ class _StreakBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF2E5),
-        borderRadius: BorderRadius.circular(999),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        border: Border.all(color: AppColors.line),
       ),
       child: const Row(
         children: [
@@ -675,7 +743,7 @@ class _StreakBadge extends StatelessWidget {
             style: TextStyle(
               color: AppColors.orangeDark,
               fontSize: 12,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -695,7 +763,7 @@ class _TodayRhythmCard extends StatelessWidget {
     return Material(
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         side: const BorderSide(color: AppColors.line),
       ),
       clipBehavior: Clip.antiAlias,
@@ -722,7 +790,7 @@ class _TodayRhythmCard extends StatelessWidget {
                       style: const TextStyle(
                         color: AppColors.inkSoft,
                         fontSize: 10,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w500,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -760,7 +828,7 @@ class _TodayRhythmCard extends StatelessWidget {
                   Expanded(
                     child: SoundLengthPattern(
                       lengths: word.syllableDurations,
-                      color: AppColors.ink,
+                      color: AppColors.orange,
                       height: 8,
                       gap: 7,
                     ),
@@ -770,12 +838,13 @@ class _TodayRhythmCard extends StatelessWidget {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: word.color,
-                      shape: BoxShape.circle,
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppRadii.control),
+                      border: Border.all(color: AppColors.line),
                     ),
                     child: const Icon(
                       Icons.volume_up_rounded,
-                      color: Colors.white,
+                      color: AppColors.orange,
                       size: 20,
                     ),
                   ),
@@ -799,12 +868,12 @@ class _EmptyRhythmCard extends StatelessWidget {
     return Material(
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         side: const BorderSide(color: AppColors.line),
       ),
       child: InkWell(
         onTap: onStartCapture,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         child: const Padding(
           padding: EdgeInsets.all(22),
           child: Row(
@@ -849,8 +918,8 @@ class _RecentWordCard extends StatelessWidget {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: BoxDecoration(
-                        color: word.color,
+                      decoration: const BoxDecoration(
+                        color: AppColors.orange,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -860,7 +929,7 @@ class _RecentWordCard extends StatelessWidget {
                       style: const TextStyle(
                         color: AppColors.inkSoft,
                         fontSize: 9,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -889,7 +958,7 @@ class _RecentWordCard extends StatelessWidget {
                 const Spacer(),
                 SoundLengthPattern(
                   lengths: word.syllableDurations,
-                  color: word.color,
+                  color: AppColors.orange,
                   height: 6,
                   gap: 4,
                 ),
@@ -911,7 +980,7 @@ class _TipCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.line),
       ),
       child: const Row(
@@ -925,7 +994,7 @@ class _TipCard extends StatelessWidget {
               children: [
                 Text(
                   '강세는 크게보다 길고 선명하게',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                 ),
                 SizedBox(height: 6),
                 Text(

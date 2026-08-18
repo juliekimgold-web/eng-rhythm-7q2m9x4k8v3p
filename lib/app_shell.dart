@@ -69,39 +69,34 @@ class _AppShellState extends State<AppShell> {
                   type: BottomNavigationBarType.fixed,
                   backgroundColor: Colors.white,
                   elevation: 0,
-                  selectedItemColor: AppColors.orangeDark,
+                  selectedItemColor: AppColors.orange,
                   unselectedItemColor: AppColors.inkSoft,
-                  selectedFontSize: 10,
-                  unselectedFontSize: 10,
-                  iconSize: 27,
+                  selectedFontSize: 11,
+                  unselectedFontSize: 11,
+                  iconSize: 24,
                   selectedLabelStyle:
-                      const TextStyle(fontWeight: FontWeight.w700),
+                      const TextStyle(fontWeight: FontWeight.w600),
                   unselectedLabelStyle:
                       const TextStyle(fontWeight: FontWeight.w500),
                   items: const [
                     BottomNavigationBarItem(
                       icon: Icon(Icons.home_outlined),
-                      activeIcon: Icon(Icons.home_rounded),
                       label: '홈',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.cast_outlined),
-                      activeIcon: Icon(Icons.cast_connected_rounded),
                       label: '연동',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.assignment_outlined),
-                      activeIcon: Icon(Icons.assignment_rounded),
                       label: '라이브러리',
                     ),
                     BottomNavigationBarItem(
-                      icon: Icon(Icons.crop_free_rounded),
-                      activeIcon: Icon(Icons.center_focus_strong_rounded),
+                      icon: Icon(Icons.crop_free_outlined),
                       label: '스캔',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.person_outline_rounded),
-                      activeIcon: Icon(Icons.person_rounded),
                       label: '마이',
                     ),
                   ],
