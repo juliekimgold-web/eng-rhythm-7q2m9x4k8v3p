@@ -7,11 +7,11 @@ abstract final class AppColors {
   static const coral = Color(0xFFFF6C56);
   static const blush = Color(0xFFFA9788);
   static const cream = Color(0xFFFFF3E8);
-  static const surface = Color(0xFFF7F6F4);
-  static const surfaceMuted = Color(0xFFF0EEEB);
-  static const ink = Color(0xFF282624);
-  static const inkSoft = Color(0xFF6F6B67);
-  static const line = Color(0xFFEDEAE6);
+  static const surface = Color(0xFFF8F8F6);
+  static const surfaceMuted = Color(0xFFF1F1EE);
+  static const ink = Color(0xFF20201E);
+  static const inkSoft = Color(0xFF696965);
+  static const line = Color(0xFFE7E7E2);
   static const lavender = Color(0xFFC78AF7);
   static const blue = Color(0xFF568AF7);
   static const yellow = Color(0xFFFFE75C);
@@ -19,8 +19,8 @@ abstract final class AppColors {
 
 abstract final class AppRadii {
   static const small = 8.0;
-  static const control = 10.0;
-  static const card = 14.0;
+  static const control = 12.0;
+  static const card = 18.0;
 }
 
 abstract final class AppTheme {
@@ -37,7 +37,7 @@ abstract final class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.surface,
+      scaffoldBackgroundColor: Colors.white,
       fontFamily: 'Pretendard',
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
@@ -88,7 +88,13 @@ abstract final class AppTheme {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
+          side: const BorderSide(color: AppColors.line),
         ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.line,
+        thickness: 1,
+        space: 1,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(

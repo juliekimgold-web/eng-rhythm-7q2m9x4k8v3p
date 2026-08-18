@@ -39,13 +39,13 @@ class HomeScreen extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 104),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 104),
             sliver: SliverList.list(
               children: [
                 _HomeHeader(onOpenProfile: onOpenProfile),
-                const SizedBox(height: 28),
+                const SizedBox(height: 30),
                 const _Greeting(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
                 _CaptureHero(onStartCapture: onStartCapture),
                 const SizedBox(height: 14),
                 _QuickActions(
@@ -147,9 +147,10 @@ class _HomeHeader extends StatelessWidget {
           button: true,
           label: '김준희 프로필 열기',
           child: Material(
-            color: Colors.white,
+            color: AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(999),
+              side: const BorderSide(color: AppColors.line),
             ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -165,11 +166,7 @@ class _HomeHeader extends StatelessWidget {
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFFFFC693), AppColors.coral],
-                        ),
+                        color: AppColors.ink,
                       ),
                       child: const Text(
                         '준',
@@ -219,8 +216,10 @@ class _RoundAction extends StatelessWidget {
       button: true,
       label: semanticLabel,
       child: Material(
-        color: Colors.white,
-        shape: const CircleBorder(),
+        color: AppColors.surface,
+        shape: const CircleBorder(
+          side: BorderSide(color: AppColors.line),
+        ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -258,23 +257,27 @@ class _Greeting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final dateLabel =
+        '${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '좋은 아침이에요',
-          style: TextStyle(
-            color: AppColors.orangeDark,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
+        Text(
+          'TODAY · $dateLabel',
+          style: const TextStyle(
+            color: AppColors.inkSoft,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.7,
           ),
         ),
         const SizedBox(height: 7),
         Text(
           '오늘도 영어 리듬을\n가볍게 깨워볼까요?',
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                fontSize: 29,
-                height: 1.25,
+                fontSize: 28,
+                height: 1.22,
                 letterSpacing: -1,
               ),
         ),
@@ -291,135 +294,93 @@ class _CaptureHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFFFF6EC), Color(0xFFFFE9D3)],
-        ),
-        border: Border.all(color: const Color(0xFFFFDFC0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0FFF7C11),
-            blurRadius: 24,
-            offset: Offset(0, 10),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              _DeviceStatus(),
+              Spacer(),
+              _CaptureGlyph(),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            '소리를 켜면\n영어가 들리기 시작해요',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontSize: 24,
+                  height: 1.25,
+                  letterSpacing: -0.65,
+                ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '주변의 반복되는 소리에서 가장 닮은 영어 리듬을 찾아드려요.',
+            style: TextStyle(
+              color: AppColors.inkSoft,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const SoundLengthPattern(
+              lengths: [0.48, 1.0, 0.42, 0.9, 0.48],
+              color: AppColors.orange,
+              height: 9,
+              gap: 6,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onStartCapture,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.ink,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(54),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.graphic_eq_rounded, size: 20),
+              label: const Text('새 리듬 수집하기'),
+            ),
           ),
         ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          children: [
-            const Positioned(
-              right: -24,
-              top: 40,
-              child: _AmbientOrb(size: 132),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _DeviceStatus(),
-                  const SizedBox(height: 25),
-                  Text(
-                    '소리를 켜면\n영어가 들리기 시작해요',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontSize: 25,
-                          height: 1.28,
-                          letterSpacing: -0.7,
-                        ),
-                  ),
-                  const SizedBox(height: 9),
-                  const SizedBox(
-                    width: 250,
-                    child: Text(
-                      '주변의 반복되는 소리를 감지해 가장 닮은 영어 리듬을 찾아드려요.',
-                      style: TextStyle(
-                        color: AppColors.inkSoft,
-                        fontSize: 13,
-                        height: 1.55,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.72),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const SoundLengthPattern(
-                      lengths: [0.48, 1.0, 0.42, 0.9, 0.48],
-                      color: AppColors.orange,
-                      height: 10,
-                      gap: 6,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: onStartCapture,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.ink,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(54),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      icon: const Icon(Icons.graphic_eq_rounded, size: 20),
-                      label: const Text('새 리듬 수집하기'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
 }
 
-class _AmbientOrb extends StatelessWidget {
-  const _AmbientOrb({required this.size});
-
-  final double size;
+class _CaptureGlyph extends StatelessWidget {
+  const _CaptureGlyph();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
+      width: 48,
+      height: 48,
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            Colors.white.withValues(alpha: 0.82),
-            AppColors.orange.withValues(alpha: 0.08),
-          ],
-        ),
+        color: AppColors.cream,
       ),
-      child: Center(
-        child: Container(
-          width: 58,
-          height: 58,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.9),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.multitrack_audio_rounded,
-            color: AppColors.orange,
-            size: 27,
-          ),
-        ),
+      child: const Icon(
+        Icons.multitrack_audio_rounded,
+        color: AppColors.orangeDark,
+        size: 23,
       ),
     );
   }
@@ -433,8 +394,9 @@ class _DeviceStatus extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.82),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.line),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
@@ -523,7 +485,10 @@ class _QuickActionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.line),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -535,7 +500,7 @@ class _QuickActionItem extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 19),
@@ -616,7 +581,8 @@ class _WeeklyProgressCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 19, 20, 18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
@@ -727,8 +693,11 @@ class _TodayRhythmCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.ink,
-      borderRadius: BorderRadius.circular(24),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: AppColors.line),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -745,13 +714,13 @@ class _TodayRhythmCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       'NO.${word.cardNumber.toString().padLeft(2, '0')}',
                       style: const TextStyle(
-                        color: Colors.white70,
+                        color: AppColors.inkSoft,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.5,
@@ -761,7 +730,7 @@ class _TodayRhythmCard extends StatelessWidget {
                   const Spacer(),
                   const Icon(
                     Icons.arrow_forward_rounded,
-                    color: Colors.white,
+                    color: AppColors.ink,
                     size: 20,
                   ),
                 ],
@@ -770,7 +739,7 @@ class _TodayRhythmCard extends StatelessWidget {
               Text(
                 word.word,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.ink,
                   fontSize: 29,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.8,
@@ -780,7 +749,7 @@ class _TodayRhythmCard extends StatelessWidget {
               Text(
                 '${word.phonetic}  ·  ${word.meaning}',
                 style: const TextStyle(
-                  color: Colors.white60,
+                  color: AppColors.inkSoft,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -791,7 +760,7 @@ class _TodayRhythmCard extends StatelessWidget {
                   Expanded(
                     child: SoundLengthPattern(
                       lengths: word.syllableDurations,
-                      color: word.color,
+                      color: AppColors.ink,
                       height: 8,
                       gap: 7,
                     ),
@@ -806,7 +775,7 @@ class _TodayRhythmCard extends StatelessWidget {
                     ),
                     child: const Icon(
                       Icons.volume_up_rounded,
-                      color: AppColors.ink,
+                      color: Colors.white,
                       size: 20,
                     ),
                   ),
@@ -829,10 +798,13 @@ class _EmptyRhythmCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: AppColors.line),
+      ),
       child: InkWell(
         onTap: onStartCapture,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         child: const Padding(
           padding: EdgeInsets.all(22),
           child: Row(
@@ -859,11 +831,11 @@ class _RecentWordCard extends StatelessWidget {
     return SizedBox(
       width: 148,
       child: Material(
-        color: Color.alphaBlend(
-          word.color.withValues(alpha: 0.085),
-          Colors.white,
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.line),
         ),
-        borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -938,8 +910,9 @@ class _TipCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F3FF),
-        borderRadius: BorderRadius.circular(22),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -986,7 +959,7 @@ class _TipIcon extends StatelessWidget {
       ),
       child: const Icon(
         Icons.lightbulb_outline_rounded,
-        color: AppColors.blue,
+        color: AppColors.orangeDark,
         size: 20,
       ),
     );
