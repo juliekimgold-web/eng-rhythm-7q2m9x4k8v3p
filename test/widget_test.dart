@@ -52,9 +52,10 @@ void main() {
       (tester) async {
     await tester.pumpWidget(const EngApp());
 
-    expect(find.byKey(const ValueKey('eng-logo-gradient')), findsWidgets);
+    expect(find.byKey(const ValueKey('eng-logo')), findsWidgets);
     expect(find.text('Dashing towards better English'), findsNothing);
     expect(find.text('새 리듬 수집하기'), findsOneWidget);
+    expect(find.text('말하기 · 발음 분석'), findsOneWidget);
     expect(find.text('연동'), findsOneWidget);
     expect(find.text('라이브러리'), findsOneWidget);
     expect(find.text('스캔'), findsOneWidget);
@@ -65,6 +66,32 @@ void main() {
 
     expect(find.text('수집한 단어'), findsOneWidget);
     expect(find.text('Laundry'), findsOneWidget);
+  });
+
+  testWidgets('home opens speaking practice as a direct secondary action', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const EngApp());
+
+    expect(
+      find.widgetWithText(FilledButton, '새 리듬 수집하기').hitTestable(),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(OutlinedButton, '말하기 · 발음 분석').hitTestable(),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('home-speak-practice')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('speak-practice-sheet')), findsOneWidget);
+    expect(find.bySemanticsLabel('말하기 시작'), findsOneWidget);
   });
 
   testWidgets('home profile control opens the signed-in user page',
@@ -84,12 +111,12 @@ void main() {
 
     await tester.tap(find.text('연동'));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('eng-logo-gradient')), findsNothing);
+    expect(find.byKey(const ValueKey('eng-logo')), findsNothing);
     expect(find.text('ENG 디바이스와 연결하고 리듬 감각을 조절하세요.'), findsOneWidget);
 
     await tester.tap(find.text('마이'));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('eng-logo-gradient')), findsNothing);
+    expect(find.byKey(const ValueKey('eng-logo')), findsNothing);
     expect(find.text('나의 영어 리듬 기록과 앱 설정을 관리해요.'), findsOneWidget);
     expect(find.text('김준희'), findsOneWidget);
     expect(find.text('학습 관리'), findsOneWidget);
@@ -219,7 +246,7 @@ void main() {
     await tester.pumpWidget(const EngApp());
     await tester.tap(find.text('새 리듬 수집하기'));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('eng-logo-gradient')), findsNothing);
+    expect(find.byKey(const ValueKey('eng-logo')), findsNothing);
     await tester.ensureVisible(find.text('소리 감지 시작'));
     await tester.tap(find.text('소리 감지 시작'));
     await tester.pump();
@@ -268,7 +295,7 @@ void main() {
     var activeSyllable = tester.widget<AnimatedDefaultTextStyle>(
       find.byKey(const ValueKey('syllable-laun')),
     );
-    expect(activeSyllable.style.color, sampleWords.first.color);
+    expect(activeSyllable.style.color, AppColors.orange);
     expect(find.byKey(const ValueKey('rhythm-whoosh')), findsOneWidget);
     expect(
       tester.widget(find.byKey(const ValueKey('rhythm-whoosh'))),
@@ -294,7 +321,7 @@ void main() {
     activeSyllable = tester.widget<AnimatedDefaultTextStyle>(
       find.byKey(const ValueKey('syllable-dree')),
     );
-    expect(activeSyllable.style.color, sampleWords.first.color);
+    expect(activeSyllable.style.color, AppColors.orange);
     final secondSyllableProgress = tester
         .widget<SoundLengthPattern>(find.byType(SoundLengthPattern).first)
         .progress!;
@@ -349,7 +376,7 @@ void main() {
     expect(find.text(sampleWords.first.exampleSentence), findsOneWidget);
   });
 
-  testWidgets('detail card exits diagonally and reveals controls on scroll',
+  testWidgets('detail card swipes calmly and reveals controls on scroll',
       (tester) async {
     tester.view.physicalSize = const Size(400, 900);
     tester.view.devicePixelRatio = 1;
@@ -383,7 +410,7 @@ void main() {
     final outgoingCard = tester.widget<Transform>(
       find.byKey(const ValueKey('swipe-transform-laundry')),
     );
-    expect(outgoingCard.transform.getTranslation().y, lessThan(0));
+    expect(outgoingCard.transform.getTranslation().y, 0);
 
     await gesture.up();
     await tester.pumpAndSettle();

@@ -14,47 +14,30 @@ class EngLogo extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: compact ? 12 : 26,
-          height: compact ? 2.5 : 3.5,
-          color: Colors.white,
+          width: compact ? 19 : 26,
+          height: compact ? 3 : 3.5,
+          color: onDark ? Colors.white : AppColors.orange,
         ),
         Text(
           'ENG',
           style: TextStyle(
-            color: Colors.white,
-            fontSize: compact ? 21 : 36,
+            color: onDark ? Colors.white : AppColors.orange,
+            fontSize: compact ? 29 : 36,
             fontWeight: FontWeight.w900,
             height: 0.9,
-            letterSpacing: compact ? -2.1 : -3.2,
+            letterSpacing: compact ? -2.6 : -3.2,
           ),
         ),
       ],
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (onDark)
-          mark
-        else
-          ShaderMask(
-            key: const ValueKey('eng-logo-gradient'),
-            blendMode: BlendMode.srcIn,
-            shaderCallback: (bounds) => const LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                Color(0x1AFFB982),
-                Color(0xFFFFA04C),
-                AppColors.orange,
-                Color(0xFFFF6467),
-              ],
-              stops: [0, 0.27, 0.62, 1],
-            ).createShader(bounds),
-            child: mark,
-          ),
-      ],
+    return SizedBox(
+      key: ValueKey(onDark ? 'eng-logo-on-dark' : 'eng-logo'),
+      height: compact ? 44 : null,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: mark,
+      ),
     );
   }
 }

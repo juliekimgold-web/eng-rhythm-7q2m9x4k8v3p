@@ -15,11 +15,13 @@ class WordDetailScreen extends StatefulWidget {
     required this.word,
     required this.repository,
     this.speechService,
+    this.openPracticeOnLaunch = false,
   });
 
   final RhythmWord word;
   final WordRepository repository;
   final SpeechService? speechService;
+  final bool openPracticeOnLaunch;
 
   @override
   State<WordDetailScreen> createState() => _WordDetailScreenState();
@@ -30,8 +32,6 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
   late final PageController _pageController;
   late final ScrollController _scrollController;
   late int _currentIndex;
-  var _lastPage = 0.0;
-  var _pageDirection = 1;
   var _flipped = false;
   var _rhythmRevealed = false;
   var _intensity = 0.72;
@@ -46,17 +46,19 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
       initialPage: _currentIndex,
       viewportFraction: 0.88,
     );
-    _lastPage = _currentIndex.toDouble();
-    _pageController.addListener(_trackPageDirection);
     _scrollController = ScrollController();
     _pronunciation = PronunciationController(
       speechService: widget.speechService ?? FlutterTtsSpeechService(),
     );
+    if (widget.openPracticeOnLaunch) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openSpeakPractice();
+      });
+    }
   }
 
   @override
   void dispose() {
-    _pageController.removeListener(_trackPageDirection);
     _pageController.dispose();
     _scrollController.dispose();
     _pronunciation.dispose();
@@ -77,18 +79,6 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
       _flipped = false;
       _rhythmRevealed = false;
     });
-  }
-
-  void _trackPageDirection() {
-    if (!_pageController.hasClients ||
-        !_pageController.position.haveDimensions) {
-      return;
-    }
-    final page = _pageController.page ?? _lastPage;
-    if ((page - _lastPage).abs() > 0.0001) {
-      _pageDirection = page > _lastPage ? 1 : -1;
-      _lastPage = page;
-    }
   }
 
   Future<void> _playCurrent() async {
@@ -175,36 +165,18 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                                     : _currentIndex.toDouble();
                                 final delta = index - page;
                                 final distance = delta.abs().clamp(0.0, 1.0);
-                                final outgoing =
-                                    _pageDirection > 0 ? delta < 0 : delta > 0;
-                                final verticalOffset =
-                                    outgoing ? -24 * distance : 0.0;
-                                final rotation = outgoing
-                                    ? (_pageDirection > 0 ? -0.011 : 0.011) *
-                                        distance
-                                    : 0.0;
-                                final scale = outgoing
-                                    ? 1 - 0.006 * distance
-                                    : 1 - 0.01 * distance;
-                                final opacity =
-                                    outgoing ? 1.0 : 1 - 0.035 * distance;
+                                final scale = 1 - 0.008 * distance;
+                                final opacity = 1 - 0.04 * distance;
                                 return Transform.translate(
                                   key: ValueKey(
                                     'swipe-transform-${word.id}',
                                   ),
-                                  offset: Offset(
-                                    0,
-                                    verticalOffset,
-                                  ),
-                                  child: Transform.rotate(
-                                    angle: rotation,
-                                    alignment: Alignment.bottomCenter,
-                                    child: Transform.scale(
-                                      scale: scale,
-                                      child: Opacity(
-                                        opacity: opacity,
-                                        child: child,
-                                      ),
+                                  offset: Offset.zero,
+                                  child: Transform.scale(
+                                    scale: scale,
+                                    child: Opacity(
+                                      opacity: opacity,
+                                      child: child,
                                     ),
                                   ),
                                 );
@@ -582,7 +554,7 @@ class _SpeakPracticeSheetState extends State<_SpeakPracticeSheet> {
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
       borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(AppRadii.card),
+        top: Radius.circular(AppRadii.large),
       ),
       child: SafeArea(
         top: false,
@@ -647,7 +619,8 @@ class _SpeakPracticeSheetState extends State<_SpeakPracticeSheet> {
                       ),
                       child: Icon(
                         _recording ? Icons.stop_rounded : Icons.mic_rounded,
-                        color: _recording ? Colors.white : AppColors.orangeDark,
+                        color:
+                            _recording ? AppColors.ink : AppColors.orangeDark,
                         size: 34,
                       ),
                     ),

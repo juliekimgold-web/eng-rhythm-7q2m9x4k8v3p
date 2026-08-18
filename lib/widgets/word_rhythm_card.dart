@@ -45,7 +45,7 @@ class WordRhythmCard extends StatelessWidget {
         onTap: onFlip,
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: angle),
-          duration: const Duration(milliseconds: 420),
+          duration: AppMotion.slow,
           curve: Curves.easeInOutCubic,
           builder: (context, value, _) {
             final showBack = value > math.pi / 2;
@@ -62,13 +62,8 @@ class WordRhythmCard extends StatelessWidget {
                 child: DecoratedBox(
                   key: ValueKey('word-card-${word.id}'),
                   decoration: BoxDecoration(
-                    color: Color.alphaBlend(
-                      word.color.withValues(alpha: 0.075),
-                      Colors.white,
-                    ),
-                    border: Border.all(
-                      color: word.color.withValues(alpha: 0.24),
-                    ),
+                    color: Colors.white,
+                    border: Border.all(color: AppColors.line),
                     borderRadius: BorderRadius.circular(AppRadii.card),
                   ),
                   child: Stack(
@@ -100,11 +95,13 @@ class WordRhythmCard extends StatelessWidget {
                           top: 10,
                           right: 58,
                           child: Material(
-                            color: Color.alphaBlend(
-                              word.color.withValues(alpha: 0.2),
-                              Colors.white,
+                            color: AppColors.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppRadii.control,
+                              ),
+                              side: const BorderSide(color: AppColors.line),
                             ),
-                            shape: const CircleBorder(),
                             child: IconButton(
                               key: ValueKey('card-play-${word.id}'),
                               onPressed: playing ? null : onPlay,
@@ -136,7 +133,7 @@ class WordRhythmCard extends StatelessWidget {
                                   : Icons.favorite_border_rounded,
                               size: 19,
                               color: word.isFavorite
-                                  ? word.color
+                                  ? AppColors.orange
                                   : AppColors.inkSoft,
                             ),
                           ),
@@ -204,7 +201,7 @@ class _CardFront extends StatelessWidget {
             widthFactor: 0.76,
             child: SoundLengthPattern(
               lengths: word.syllableDurations,
-              color: word.color,
+              color: AppColors.orange,
               activeIndex: playing ? activeSyllable : -1,
               emphasisIndex: word.stressIndex,
               progress: playing ? playbackProgress : null,
@@ -274,7 +271,7 @@ class _PronunciationRhythm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 260),
+      duration: AppMotion.slow,
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       child: revealed
@@ -304,9 +301,11 @@ class _PronunciationRhythm extends StatelessWidget {
                               key: ValueKey(
                                 'syllable-${word.syllables[index]}',
                               ),
-                              duration: const Duration(milliseconds: 70),
+                              duration: AppMotion.fast,
                               style: TextStyle(
-                                color: word.color.withValues(alpha: opacity),
+                                color: AppColors.orange.withValues(
+                                  alpha: opacity,
+                                ),
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -314,12 +313,14 @@ class _PronunciationRhythm extends StatelessWidget {
                             ),
                             const SizedBox(height: 10),
                             AnimatedContainer(
-                              duration: const Duration(milliseconds: 70),
+                              duration: AppMotion.fast,
                               height: 2,
                               margin: EdgeInsets.symmetric(
                                 horizontal: stressed ? 2 : 12,
                               ),
-                              color: word.color.withValues(alpha: opacity),
+                              color: AppColors.orange.withValues(
+                                alpha: opacity,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -353,7 +354,7 @@ class _PronunciationRhythm extends StatelessWidget {
               word.word,
               key: const ValueKey('unseparated-word-rhythm'),
               style: TextStyle(
-                color: word.color.withValues(alpha: 0.86),
+                color: AppColors.orange.withValues(alpha: 0.86),
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
               ),
@@ -397,8 +398,8 @@ class _CardBack extends StatelessWidget {
           const Spacer(),
           Text(
             word.syllables.join(' · '),
-            style: TextStyle(
-              color: word.color,
+            style: const TextStyle(
+              color: AppColors.orange,
               fontSize: 25,
               fontWeight: FontWeight.w800,
             ),
