@@ -30,16 +30,21 @@ class _DeviceScreenState extends State<DeviceScreen> {
           const SizedBox(height: 24),
           _DeviceHero(connected: _connected),
           const SizedBox(height: 15),
-          FilledButton.icon(
-            onPressed: () => setState(() => _connected = !_connected),
-            style: FilledButton.styleFrom(
-              backgroundColor: _connected ? AppColors.ink : AppColors.orange,
+          if (_connected)
+            OutlinedButton.icon(
+              onPressed: () => setState(() => _connected = false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.error,
+              ),
+              icon: const Icon(Icons.link_off_rounded),
+              label: const Text('연결 해제'),
+            )
+          else
+            FilledButton.icon(
+              onPressed: () => setState(() => _connected = true),
+              icon: const Icon(Icons.bluetooth_searching_rounded),
+              label: const Text('디바이스 찾기'),
             ),
-            icon: Icon(_connected
-                ? Icons.link_off_rounded
-                : Icons.bluetooth_searching_rounded),
-            label: Text(_connected ? '연결 해제' : '디바이스 찾기'),
-          ),
           const SizedBox(height: 30),
           Text('리듬 설정', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 13),
@@ -57,7 +62,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('진동 강도',
-                                style: TextStyle(fontWeight: FontWeight.w800)),
+                                style: TextStyle(fontWeight: FontWeight.w600)),
                             SizedBox(height: 3),
                             Text('손에 편안하게 느껴지는 세기',
                                 style: TextStyle(
@@ -69,7 +74,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                         '${(_vibration * 100).round()}%',
                         style: const TextStyle(
                             color: AppColors.orangeDark,
-                            fontWeight: FontWeight.w800),
+                            fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
@@ -83,7 +88,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                     value: _noiseFilter,
                     onChanged: (value) => setState(() => _noiseFilter = value),
                     title: const Text('주변 잡음 필터링',
-                        style: TextStyle(fontWeight: FontWeight.w800)),
+                        style: TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: const Text('반복되는 핵심 소리만 분리해요'),
                   ),
                   const Divider(height: 18),
@@ -92,7 +97,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                     value: _autoPlay,
                     onChanged: (value) => setState(() => _autoPlay = value),
                     title: const Text('스캔 단어 자동 재생',
-                        style: TextStyle(fontWeight: FontWeight.w800)),
+                        style: TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: const Text('발견한 단어에서 진동을 바로 재생해요'),
                   ),
                 ],
@@ -231,7 +236,7 @@ class _InfoRow extends StatelessWidget {
           const SizedBox(width: 12),
           Text(label),
           const Spacer(),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
     );

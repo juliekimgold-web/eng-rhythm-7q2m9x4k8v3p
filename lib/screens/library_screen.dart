@@ -132,8 +132,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                     vertical: 10,
                                   ),
                                   decoration: BoxDecoration(
-                                    color:
-                                        selected ? AppColors.ink : Colors.white,
+                                    color: selected
+                                        ? AppColors.orange
+                                        : Colors.white,
                                     borderRadius:
                                         BorderRadius.circular(AppRadii.small),
                                     border: Border.all(color: AppColors.line),
@@ -142,9 +143,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                     filter,
                                     style: TextStyle(
                                       color: selected
-                                          ? Colors.white
+                                          ? AppColors.ink
                                           : AppColors.inkSoft,
-                                      fontWeight: FontWeight.w700,
+                                      fontWeight: FontWeight.w600,
                                       height: 1,
                                     ),
                                   ),
@@ -451,14 +452,11 @@ class _LibraryWordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tint = Color.alphaBlend(
-      word.color.withValues(alpha: 0.12),
-      Colors.white,
-    );
     return Material(
-      color: tint,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.card),
+        side: const BorderSide(color: AppColors.line),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -467,7 +465,6 @@ class _LibraryWordCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(width: 5, color: word.color),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 15, 8, 15),
@@ -480,7 +477,7 @@ class _LibraryWordCard extends StatelessWidget {
                           children: [
                             SoundLengthPattern(
                               lengths: word.syllableDurations,
-                              color: word.color,
+                              color: AppColors.orange,
                               emphasisIndex: word.stressIndex,
                               height: 8,
                               gap: 3,
@@ -488,10 +485,10 @@ class _LibraryWordCard extends StatelessWidget {
                             const SizedBox(height: 9),
                             Text(
                               '${word.rhythmBeats}박자',
-                              style: TextStyle(
-                                color: _readableColor(word.color),
+                              style: const TextStyle(
+                                color: AppColors.orangeDark,
                                 fontSize: 10,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -535,10 +532,10 @@ class _LibraryWordCard extends StatelessWidget {
                                     word.source,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: _readableColor(word.color),
+                                    style: const TextStyle(
+                                      color: AppColors.inkSoft,
                                       fontSize: 11,
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
@@ -562,7 +559,7 @@ class _LibraryWordCard extends StatelessWidget {
                               ? Icons.favorite_rounded
                               : Icons.favorite_border_rounded,
                           color: word.isFavorite
-                              ? AppColors.coral
+                              ? AppColors.orange
                               : AppColors.inkSoft,
                         ),
                       ),
@@ -585,9 +582,3 @@ String _selectedDateLabel(DateTime date) {
 
 String _timeLabel(DateTime date) =>
     '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-
-Color _readableColor(Color color) {
-  if (color == AppColors.yellow) return const Color(0xFF8A6B00);
-  if (color == AppColors.peach) return const Color(0xFFB95600);
-  return Color.lerp(color, AppColors.ink, 0.18)!;
-}
