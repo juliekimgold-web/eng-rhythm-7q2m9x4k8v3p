@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/pronunciation_controller.dart';
@@ -96,6 +95,37 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
       _pageDirection = page > _lastPage ? 1 : -1;
       _lastPage = page;
     }
+  }
+
+  void _onCardHorizontalDragUpdate(DragUpdateDetails details) {
+    if (_controlsOpen || !_pageController.hasClients) return;
+    final position = _pageController.position;
+    final nextOffset = (_pageController.offset - details.delta.dx).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    _pageController.jumpTo(nextOffset);
+  }
+
+  void _onCardHorizontalDragEnd(DragEndDetails details) {
+    if (_controlsOpen || !_pageController.hasClients) return;
+    final page = _pageController.page ?? _currentIndex.toDouble();
+    final velocity = details.primaryVelocity ?? 0;
+    final int targetPage;
+    if (velocity < -250) {
+      targetPage = page.floor() + 1;
+    } else if (velocity > 250) {
+      targetPage = page.ceil() - 1;
+    } else {
+      targetPage = page.round();
+    }
+    unawaited(
+      _pageController.animateToPage(
+        targetPage.clamp(0, widget.repository.words.length - 1),
+        duration: AppMotion.base,
+        curve: Curves.easeOutCubic,
+      ),
+    );
   }
 
   void _onCardVerticalDragStart(DragStartDetails details) {
@@ -257,15 +287,18 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                             scale: 1 - 0.12 * sheetProgress,
                             duration: AppMotion.fast,
                             curve: Curves.easeOutCubic,
-                            child: ScrollConfiguration(
-                              behavior: const _CardPageScrollBehavior(),
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onHorizontalDragUpdate:
+                                  _onCardHorizontalDragUpdate,
+                              onHorizontalDragEnd: _onCardHorizontalDragEnd,
                               child: PageView.builder(
                                 key: const ValueKey(
                                   'word-card-page-view',
                                 ),
                                 controller: _pageController,
                                 clipBehavior: Clip.none,
-                                physics: const PageScrollPhysics(),
+                                physics: const NeverScrollableScrollPhysics(),
                                 itemCount: words.length,
                                 onPageChanged: _onPageChanged,
                                 itemBuilder: (context, index) {
@@ -384,17 +417,6 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
       },
     );
   }
-}
-
-class _CardPageScrollBehavior extends MaterialScrollBehavior {
-  const _CardPageScrollBehavior();
-
-  @override
-  Set<PointerDeviceKind> get dragDevices => {
-        ...super.dragDevices,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.trackpad,
-      };
 }
 
 class _PinnedWordCardDelegate extends SliverPersistentHeaderDelegate {
