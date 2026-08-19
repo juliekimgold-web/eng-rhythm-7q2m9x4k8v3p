@@ -56,25 +56,30 @@ class _LibraryScreenState extends State<LibraryScreen> {
           final showingCalendar = _mode == '수집 기록';
           final visibleWords =
               showingCalendar ? _selectedWords : _filteredWords;
+          final favoriteCount =
+              widget.repository.words.where((word) => word.isFavorite).length;
           return CustomScrollView(
+            physics: const BouncingScrollPhysics(),
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.page,
+                  AppSpacing.sm,
+                  AppSpacing.page,
+                  0,
+                ),
                 sliver: SliverList.list(
                   children: [
-                    Text('수집한 단어',
-                        style: Theme.of(context).textTheme.headlineLarge),
-                    const SizedBox(height: 7),
-                    const Text(
-                      '익숙해진 리듬을 날짜와 패턴으로 다시 만나보세요.',
-                      style: TextStyle(color: AppColors.inkSoft),
+                    _LibraryIntro(
+                      wordCount: widget.repository.words.length,
+                      favoriteCount: favoriteCount,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.lg),
                     _LibraryModeSwitch(
                       value: _mode,
                       onChanged: (value) => setState(() => _mode = value),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: AppSpacing.md),
                     if (showingCalendar) ...[
                       _CollectionCalendar(
                         month: _visibleMonth,
@@ -112,7 +117,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           prefixIcon: Icon(Icons.search_rounded),
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: AppSpacing.sm),
                       SizedBox(
                         height: AppControlSize.compactHeight,
                         child: ListView(
@@ -129,7 +134,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           }).toList(),
                         ),
                       ),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: AppSpacing.page),
                       Row(
                         children: [
                           Text(
@@ -146,7 +151,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         ],
                       ),
                     ],
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.sm),
                   ],
                 ),
               ),
@@ -173,7 +178,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 96),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.page,
+                    0,
+                    AppSpacing.page,
+                    96,
+                  ),
                   sliver: SliverList.separated(
                     itemCount: visibleWords.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -199,6 +209,121 @@ class _LibraryScreenState extends State<LibraryScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+class _LibraryIntro extends StatelessWidget {
+  const _LibraryIntro({
+    required this.wordCount,
+    required this.favoriteCount,
+  });
+
+  final int wordCount;
+  final int favoriteCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'MY LIBRARY',
+          style: TextStyle(
+            color: AppColors.inkSoft,
+            fontSize: AppTypeScale.caption,
+            fontWeight: FontWeight.w500,
+            letterSpacing: .8,
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          '수집한 영어 리듬을\n한눈에 모아보세요',
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                fontSize: 28,
+                height: 1.22,
+                letterSpacing: -1,
+              ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const Text(
+          '날짜와 리듬 패턴으로 필요한 단어를 빠르게 찾아볼 수 있어요.',
+          style: TextStyle(
+            color: AppColors.inkSoft,
+            fontSize: AppTypeScale.body,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Container(
+          key: const ValueKey('library-overview'),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppRadii.card),
+            boxShadow: AppShadows.card,
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.auto_stories_outlined,
+                color: AppColors.orange,
+                size: 22,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    style: const TextStyle(
+                      color: AppColors.inkSoft,
+                      fontSize: AppTypeScale.compactLabel,
+                      height: 1.45,
+                    ),
+                    children: [
+                      const TextSpan(text: '지금까지 '),
+                      TextSpan(
+                        text: '$wordCount개',
+                        style: const TextStyle(
+                          color: AppColors.ink,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const TextSpan(text: '의 리듬을 모았어요'),
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.favorite_rounded,
+                      color: AppColors.orange,
+                      size: 15,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      '$favoriteCount',
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: AppTypeScale.caption,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -240,9 +365,9 @@ class _LibraryFilterTab extends StatelessWidget {
                   horizontal: AppControlSize.compactHorizontalPadding,
                 ),
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.orange : Colors.white,
+                  color: selected ? AppColors.orange : AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadii.small),
-                  boxShadow: AppShadows.control,
+                  boxShadow: selected ? AppShadows.control : null,
                 ),
                 child: Text(
                   label,
@@ -271,9 +396,8 @@ class _LibraryModeSwitch extends StatelessWidget {
     return Container(
       height: AppControlSize.compactHeight,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadii.control),
-        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: ['갤러리', '수집 기록'].map((label) {
@@ -485,122 +609,135 @@ class _LibraryWordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
-      elevation: 1,
-      shadowColor: const Color(0x18000000),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.card),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 15, 8, 15),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 58,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SoundLengthPattern(
-                              key: ValueKey('library-rhythm-${word.id}'),
-                              lengths: word.syllableDurations,
-                              color: word.color,
-                              emphasisIndex: word.stressIndex,
-                              height: 8,
-                              gap: 3,
-                            ),
-                            const SizedBox(height: 9),
-                            Text(
-                              '${word.rhythmBeats}박자',
-                              style: const TextStyle(
-                                color: AppColors.inkSoft,
-                                fontSize: AppTypeScale.caption,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+      color: Colors.transparent,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          boxShadow: AppShadows.raisedCard,
+        ),
+        child: Material(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadii.card),
+            side: BorderSide(
+              color: AppColors.line.withValues(alpha: .45),
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 15, 8, 15),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 58,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Flexible(
-                                  child: Text(
-                                    word.word,
-                                    overflow: TextOverflow.ellipsis,
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
-                                  ),
+                                SoundLengthPattern(
+                                  key: ValueKey('library-rhythm-${word.id}'),
+                                  lengths: word.syllableDurations,
+                                  color: word.color,
+                                  emphasisIndex: word.stressIndex,
+                                  height: 8,
+                                  gap: 3,
                                 ),
-                                const SizedBox(width: 7),
+                                const SizedBox(height: 9),
                                 Text(
-                                  word.phonetic,
+                                  '${word.rhythmBeats}박자',
                                   style: const TextStyle(
-                                    fontSize: AppTypeScale.caption,
                                     color: AppColors.inkSoft,
+                                    fontSize: AppTypeScale.caption,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              word.meaning,
-                              style: const TextStyle(color: AppColors.inkSoft),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Text(
-                                    word.source,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: AppColors.inkSoft,
-                                      fontSize: AppTypeScale.caption,
-                                      fontWeight: FontWeight.w500,
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        word.word,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium,
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 7),
+                                    Text(
+                                      word.phonetic,
+                                      style: const TextStyle(
+                                        fontSize: AppTypeScale.caption,
+                                        color: AppColors.inkSoft,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                if (showTime)
-                                  Text(
-                                    _timeLabel(word.collectedAt),
-                                    style: const TextStyle(
-                                      color: AppColors.inkSoft,
-                                      fontSize: AppTypeScale.caption,
+                                const SizedBox(height: 4),
+                                Text(
+                                  word.meaning,
+                                  style:
+                                      const TextStyle(color: AppColors.inkSoft),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        word.source,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: AppColors.inkSoft,
+                                          fontSize: AppTypeScale.caption,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    if (showTime)
+                                      Text(
+                                        _timeLabel(word.collectedAt),
+                                        style: const TextStyle(
+                                          color: AppColors.inkSoft,
+                                          fontSize: AppTypeScale.caption,
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                          IconButton(
+                            onPressed: onFavorite,
+                            icon: Icon(
+                              word.isFavorite
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              color: word.isFavorite
+                                  ? word.color
+                                  : AppColors.inkSoft,
+                            ),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        onPressed: onFavorite,
-                        icon: Icon(
-                          word.isFavorite
-                              ? Icons.favorite_rounded
-                              : Icons.favorite_border_rounded,
-                          color:
-                              word.isFavorite ? word.color : AppColors.inkSoft,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

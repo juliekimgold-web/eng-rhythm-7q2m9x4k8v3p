@@ -60,7 +60,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                     setState(() => _connected = true);
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.orange,
+                    backgroundColor: AppColors.ink,
                     foregroundColor: Colors.white,
                   ),
                   icon: const Icon(Icons.bluetooth_searching_rounded),
@@ -272,8 +272,8 @@ class _DeviceDashboardCard extends StatelessWidget {
                     key: const ValueKey('device-connection-manager'),
                     onPressed: onManage,
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.orangeDark,
-                      backgroundColor: AppColors.cream,
+                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.ink,
                       minimumSize: const Size.fromHeight(48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

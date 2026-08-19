@@ -25,17 +25,18 @@ class _MyPageScreenState extends State<MyPageScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 96),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.page,
+          AppSpacing.sm,
+          AppSpacing.page,
+          104,
+        ),
         children: [
-          Text('마이', style: Theme.of(context).textTheme.headlineLarge),
-          const SizedBox(height: 7),
-          const Text(
-            '나의 영어 리듬 기록과 앱 설정을 관리해요.',
-            style: TextStyle(color: AppColors.inkSoft),
-          ),
-          const SizedBox(height: 24),
+          const _MyIntro(),
+          const SizedBox(height: AppSpacing.lg),
           _ProfileCard(onEdit: () => _showReadyMessage('프로필 수정')),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.md),
           AnimatedBuilder(
             animation: widget.repository,
             builder: (context, _) {
@@ -48,9 +49,12 @@ class _MyPageScreenState extends State<MyPageScreen> {
               );
             },
           ),
-          const SizedBox(height: 30),
-          Text('학습 관리', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.section),
+          const _MySectionTitle(
+            title: '학습 관리',
+            caption: '매일 이어갈 리듬 목표와 알림을 관리해요.',
+          ),
+          const SizedBox(height: AppSpacing.sm),
           _SettingsGroup(
             children: [
               _MenuTile(
@@ -61,20 +65,18 @@ class _MyPageScreenState extends State<MyPageScreen> {
               ),
               const Divider(height: 1, indent: 64, color: AppColors.line),
               SwitchListTile.adaptive(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+                contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
                 activeThumbColor: AppColors.orangeDark,
                 activeTrackColor: AppColors.peach,
-                secondary: const Icon(
-                  Icons.notifications_none_rounded,
-                  color: AppColors.inkSoft,
+                secondary: const _SettingsIcon(
+                  icon: Icons.notifications_none_rounded,
                 ),
                 value: _collectionReminder,
                 onChanged: (value) =>
                     setState(() => _collectionReminder = value),
                 title: const Text(
                   '수집 리마인더',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: const Text(
                   '매일 오후 8시',
@@ -83,9 +85,12 @@ class _MyPageScreenState extends State<MyPageScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 26),
-          Text('앱 관리', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.section),
+          const _MySectionTitle(
+            title: '앱 관리',
+            caption: '사용 환경과 서비스 정보를 확인해요.',
+          ),
+          const SizedBox(height: AppSpacing.sm),
           _SettingsGroup(
             children: [
               _MenuTile(
@@ -117,6 +122,71 @@ class _MyPageScreenState extends State<MyPageScreen> {
   }
 }
 
+class _MyIntro extends StatelessWidget {
+  const _MyIntro();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'MY RHYTHM',
+          style: TextStyle(
+            color: AppColors.inkSoft,
+            fontSize: AppTypeScale.caption,
+            fontWeight: FontWeight.w500,
+            letterSpacing: .8,
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          '나의 영어 리듬을\n차분하게 이어가요',
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                fontSize: 28,
+                height: 1.22,
+                letterSpacing: -1,
+              ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const Text(
+          '학습 기록을 돌아보고 나에게 맞는 수집 습관을 만들어보세요.',
+          style: TextStyle(
+            color: AppColors.inkSoft,
+            fontSize: AppTypeScale.body,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MySectionTitle extends StatelessWidget {
+  const _MySectionTitle({required this.title, required this.caption});
+
+  final String title;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 4),
+        Text(
+          caption,
+          style: const TextStyle(
+            color: AppColors.inkSoft,
+            fontSize: AppTypeScale.caption,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ProfileCard extends StatelessWidget {
   const _ProfileCard({required this.onEdit});
 
@@ -125,10 +195,11 @@ class _ProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpacing.page),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadii.card),
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         children: [
@@ -137,16 +208,15 @@ class _ProfileCard extends StatelessWidget {
             height: 58,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.cream,
-              border: Border.all(color: AppColors.peach),
+              color: AppColors.ink,
               shape: BoxShape.circle,
             ),
             child: const Text(
               '준',
               style: TextStyle(
-                color: AppColors.orangeDark,
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -157,12 +227,29 @@ class _ProfileCard extends StatelessWidget {
               children: [
                 Text(
                   '김준희',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
-                SizedBox(height: 4),
-                Text(
-                  'Rhythm Explorer',
-                  style: TextStyle(color: AppColors.inkSoft, fontSize: 12),
+                SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.local_fire_department_rounded,
+                      color: AppColors.orange,
+                      size: 15,
+                    ),
+                    SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        'Rhythm Explorer · 5일 연속',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.inkSoft,
+                          fontSize: AppTypeScale.caption,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -171,6 +258,10 @@ class _ProfileCard extends StatelessWidget {
             onPressed: onEdit,
             icon: const Icon(Icons.edit_outlined),
             color: AppColors.inkSoft,
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.surface,
+              minimumSize: const Size.square(AppControlSize.minTouchTarget),
+            ),
           ),
         ],
       ),
@@ -191,24 +282,62 @@ class _ActivitySummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: const ValueKey('my-activity-summary'),
-      padding: const EdgeInsets.symmetric(vertical: 19),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF7),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadii.card),
+        boxShadow: AppShadows.card,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _StatItem(value: '$wordCount', label: '수집한 단어'),
-          const SizedBox(
-            height: 42,
-            child: VerticalDivider(color: AppColors.line),
+          const Row(
+            children: [
+              Text(
+                '이번 주 학습',
+                style: TextStyle(
+                  color: AppColors.ink,
+                  fontSize: AppTypeScale.bodyLarge,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Spacer(),
+              Text(
+                '목표의 71%',
+                style: TextStyle(
+                  color: AppColors.orangeDark,
+                  fontSize: AppTypeScale.caption,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
-          const _StatItem(value: '5일', label: '연속 수집'),
-          const SizedBox(
-            height: 42,
-            child: VerticalDivider(color: AppColors.line),
+          const SizedBox(height: AppSpacing.sm),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+            child: const LinearProgressIndicator(
+              value: .71,
+              minHeight: 7,
+              color: AppColors.orange,
+              backgroundColor: AppColors.surfaceMuted,
+            ),
           ),
-          _StatItem(value: '$favoriteCount', label: '즐겨찾기'),
+          const SizedBox(height: AppSpacing.page),
+          Row(
+            children: [
+              _StatItem(value: '$wordCount', label: '수집한 단어'),
+              const SizedBox(
+                height: 42,
+                child: VerticalDivider(color: AppColors.line),
+              ),
+              const _StatItem(value: '5일', label: '연속 수집'),
+              const SizedBox(
+                height: 42,
+                child: VerticalDivider(color: AppColors.line),
+              ),
+              _StatItem(value: '$favoriteCount', label: '즐겨찾기'),
+            ],
+          ),
         ],
       ),
     );
@@ -231,7 +360,7 @@ class _StatItem extends StatelessWidget {
             style: const TextStyle(
               color: AppColors.ink,
               fontSize: 20,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 4),
@@ -260,6 +389,8 @@ class _SettingsGroup extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.card),
       ),
+      elevation: 1,
+      shadowColor: const Color(0x16000000),
       clipBehavior: Clip.antiAlias,
       child: Column(children: children),
     );
@@ -284,9 +415,10 @@ class _MenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
-      leading: Icon(icon, color: AppColors.inkSoft),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+      minTileHeight: 64,
+      contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
+      leading: _SettingsIcon(icon: icon),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: subtitle == null
           ? null
           : Text(
@@ -299,6 +431,26 @@ class _MenuTile extends StatelessWidget {
             color: AppColors.inkSoft,
           ),
       onTap: onTap,
+    );
+  }
+}
+
+class _SettingsIcon extends StatelessWidget {
+  const _SettingsIcon({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.small),
+      ),
+      child: Icon(icon, color: AppColors.inkSoft, size: 20),
     );
   }
 }

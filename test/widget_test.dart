@@ -69,7 +69,7 @@ void main() {
     await tester.tap(find.text('라이브러리'));
     await tester.pumpAndSettle();
 
-    expect(find.text('수집한 단어'), findsOneWidget);
+    expect(find.text('수집한 영어 리듬을\n한눈에 모아보세요'), findsOneWidget);
     expect(find.text('Laundry'), findsOneWidget);
   });
 
@@ -106,8 +106,8 @@ void main() {
     await tester.tap(find.text('김준희'));
     await tester.pumpAndSettle();
 
-    expect(find.text('나의 영어 리듬 기록과 앱 설정을 관리해요.'), findsOneWidget);
-    expect(find.text('Rhythm Explorer'), findsOneWidget);
+    expect(find.text('나의 영어 리듬을\n차분하게 이어가요'), findsOneWidget);
+    expect(find.text('Rhythm Explorer · 5일 연속'), findsOneWidget);
   });
 
   testWidgets('opens connection and my pages from the new navigation',
@@ -123,6 +123,17 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('ENG Rhythm Band 연결됨'), findsOneWidget);
+    final connectionButton = tester.widget<TextButton>(
+      find.byKey(const ValueKey('device-connection-manager')),
+    );
+    expect(
+      connectionButton.style?.backgroundColor?.resolve({}),
+      AppColors.ink,
+    );
+    expect(
+      connectionButton.style?.foregroundColor?.resolve({}),
+      Colors.white,
+    );
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('device-quick-settings')),
       180,
@@ -137,7 +148,7 @@ void main() {
     await tester.tap(find.text('마이'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('eng-logo')), findsNothing);
-    expect(find.text('나의 영어 리듬 기록과 앱 설정을 관리해요.'), findsOneWidget);
+    expect(find.text('나의 영어 리듬을\n차분하게 이어가요'), findsOneWidget);
     expect(find.text('김준희'), findsOneWidget);
     expect(find.text('학습 관리'), findsOneWidget);
 
@@ -145,6 +156,26 @@ void main() {
       find.byKey(const ValueKey('my-activity-summary')),
     );
     expect((summary.decoration! as BoxDecoration).color, isNot(AppColors.ink));
+  });
+
+  testWidgets('redesigned library and my pages fit a narrow mobile viewport',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const EngApp());
+
+    await tester.tap(find.text('라이브러리'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('library-overview')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('마이'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('my-activity-summary')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('fits the scan experience on a small mobile viewport', (
