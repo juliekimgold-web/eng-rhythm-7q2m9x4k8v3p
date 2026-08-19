@@ -286,6 +286,11 @@ void main() {
   testWidgets('capture shows duration extraction before word matching',
       (tester) async {
     await tester.pumpWidget(const EngApp());
+    await tester.drag(
+      find.byType(CustomScrollView).first,
+      const Offset(0, -160),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('새 리듬 수집하기'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('eng-logo')), findsNothing);

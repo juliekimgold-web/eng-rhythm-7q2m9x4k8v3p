@@ -69,7 +69,9 @@ class HomeScreen extends StatelessWidget {
                 _HomeHeader(onOpenProfile: onOpenProfile),
                 const SizedBox(height: AppSpacing.lg),
                 const _Greeting(),
-                const SizedBox(height: AppSpacing.page),
+                const SizedBox(height: AppSpacing.md),
+                const _DailyTipBanner(),
+                const SizedBox(height: AppSpacing.lg),
                 _CaptureHero(
                   onStartCapture: onStartCapture,
                   onStartSpeaking: () => _openSpeakPractice(context),
@@ -288,25 +290,14 @@ class _Greeting extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              'TODAY · $dateLabel',
-              style: const TextStyle(
-                color: AppColors.inkSoft,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.7,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            const Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: _DailyTipPill(),
-              ),
-            ),
-          ],
+        Text(
+          'TODAY · $dateLabel',
+          style: const TextStyle(
+            color: AppColors.inkSoft,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.7,
+          ),
         ),
         const SizedBox(height: 7),
         Text(
@@ -322,48 +313,75 @@ class _Greeting extends StatelessWidget {
   }
 }
 
-class _DailyTipPill extends StatelessWidget {
-  const _DailyTipPill();
+class _DailyTipBanner extends StatelessWidget {
+  const _DailyTipBanner();
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: '모음을 조금 더 길게 유지하면 영어 리듬이 훨씬 자연스러워져요.',
-      child: Semantics(
-        label: '오늘의 작은 팁. 강세는 크게보다 길고 선명하게.',
-        child: Container(
-          key: const ValueKey('home-daily-tip'),
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-          constraints: const BoxConstraints(maxWidth: 220),
-          decoration: BoxDecoration(
-            color: AppColors.cream,
-            borderRadius: BorderRadius.circular(AppRadii.pill),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.lightbulb_outline_rounded,
+    return Semantics(
+      label: '오늘의 작은 팁. 강세는 크게보다 길고 선명하게. 모음을 길게 유지하면 리듬이 더 자연스러워져요.',
+      child: Container(
+        key: const ValueKey('home-daily-tip'),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.cream,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: AppColors.orange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.auto_awesome_outlined,
                 color: AppColors.orangeDark,
-                size: 14,
+                size: 17,
               ),
-              SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  '오늘의 팁 · 강세는 길고 선명하게',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.orangeDark,
-                    fontSize: 11,
-                    height: 1.2,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.15,
+            ),
+            const SizedBox(width: 11),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '오늘의 작은 팁',
+                    style: TextStyle(
+                      color: AppColors.orangeDark,
+                      fontSize: 11,
+                      height: 1.25,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
+                  SizedBox(height: 3),
+                  Text(
+                    '강세는 크게보다 길고 선명하게',
+                    style: TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 14,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '모음을 길게 유지하면 리듬이 더 자연스러워져요.',
+                    style: TextStyle(
+                      color: AppColors.inkSoft,
+                      fontSize: 12,
+                      height: 1.48,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
