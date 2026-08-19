@@ -60,8 +60,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
                     setState(() => _connected = true);
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.ink,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.orange,
+                    foregroundColor: AppColors.ink,
                   ),
                   icon: const Icon(Icons.bluetooth_searching_rounded),
                   label: const Text('디바이스 다시 연결'),
@@ -272,9 +272,10 @@ class _DeviceDashboardCard extends StatelessWidget {
                     key: const ValueKey('device-connection-manager'),
                     onPressed: onManage,
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: AppColors.ink,
+                      foregroundColor: AppColors.ink,
+                      backgroundColor: AppColors.surface,
                       minimumSize: const Size.fromHeight(48),
+                      side: const BorderSide(color: AppColors.line),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

@@ -106,7 +106,8 @@ void main() {
     await tester.tap(find.text('김준희'));
     await tester.pumpAndSettle();
 
-    expect(find.text('나의 영어 리듬을\n차분하게 이어가요'), findsOneWidget);
+    expect(find.byKey(const ValueKey('my-page-header')), findsOneWidget);
+    expect(find.text('나의 영어 리듬을\n차분하게 이어가요'), findsNothing);
     expect(find.text('Rhythm Explorer · 5일 연속'), findsOneWidget);
   });
 
@@ -128,11 +129,11 @@ void main() {
     );
     expect(
       connectionButton.style?.backgroundColor?.resolve({}),
-      AppColors.ink,
+      AppColors.surface,
     );
     expect(
       connectionButton.style?.foregroundColor?.resolve({}),
-      Colors.white,
+      AppColors.ink,
     );
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('device-quick-settings')),
@@ -148,7 +149,7 @@ void main() {
     await tester.tap(find.text('마이'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('eng-logo')), findsNothing);
-    expect(find.text('나의 영어 리듬을\n차분하게 이어가요'), findsOneWidget);
+    expect(find.byKey(const ValueKey('my-page-header')), findsOneWidget);
     expect(find.text('김준희'), findsOneWidget);
     expect(find.text('학습 관리'), findsOneWidget);
 

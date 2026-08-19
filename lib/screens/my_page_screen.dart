@@ -33,8 +33,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
           104,
         ),
         children: [
-          const _MyIntro(),
-          const SizedBox(height: AppSpacing.lg),
+          _MyPageHeader(onOpenSettings: () => _showReadyMessage('앱 설정')),
+          const SizedBox(height: AppSpacing.page),
           _ProfileCard(onEdit: () => _showReadyMessage('프로필 수정')),
           const SizedBox(height: AppSpacing.md),
           AnimatedBuilder(
@@ -122,39 +122,33 @@ class _MyPageScreenState extends State<MyPageScreen> {
   }
 }
 
-class _MyIntro extends StatelessWidget {
-  const _MyIntro();
+class _MyPageHeader extends StatelessWidget {
+  const _MyPageHeader({required this.onOpenSettings});
+
+  final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      key: const ValueKey('my-page-header'),
       children: [
-        const Text(
-          'MY RHYTHM',
-          style: TextStyle(
-            color: AppColors.inkSoft,
-            fontSize: AppTypeScale.caption,
-            fontWeight: FontWeight.w500,
-            letterSpacing: .8,
+        Expanded(
+          child: Text(
+            '마이',
+            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  fontSize: 26,
+                  letterSpacing: -.7,
+                ),
           ),
         ),
-        const SizedBox(height: 7),
-        Text(
-          '나의 영어 리듬을\n차분하게 이어가요',
-          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                fontSize: 28,
-                height: 1.22,
-                letterSpacing: -1,
-              ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        const Text(
-          '학습 기록을 돌아보고 나에게 맞는 수집 습관을 만들어보세요.',
-          style: TextStyle(
-            color: AppColors.inkSoft,
-            fontSize: AppTypeScale.body,
-            height: 1.5,
+        IconButton(
+          onPressed: onOpenSettings,
+          tooltip: '앱 설정',
+          icon: const Icon(Icons.settings_outlined, size: 22),
+          color: AppColors.ink,
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.surface,
+            minimumSize: const Size.square(AppControlSize.minTouchTarget),
           ),
         ),
       ],
