@@ -41,6 +41,9 @@ jobs:
           --base-href "/eng-rhythm-7q2m9x4k8v3p/"
           --pwa-strategy=none
 
+      - name: Stamp web asset version
+        run: sed -i "s/__BUILD_ID__/${GITHUB_SHA}/g" build/web/index.html
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
