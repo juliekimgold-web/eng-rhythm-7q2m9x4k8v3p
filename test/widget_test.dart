@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -439,6 +440,7 @@ void main() {
 
     final gesture = await tester.startGesture(
       tester.getCenter(find.byKey(const ValueKey('word-card-page-view'))),
+      kind: PointerDeviceKind.mouse,
     );
     await gesture.moveBy(const Offset(-40, 0));
     await tester.pump(const Duration(milliseconds: 16));
@@ -459,9 +461,10 @@ void main() {
 
     expect(find.text('2 / 6  ·  좌우로 넘겨 다음 단어 보기'), findsOneWidget);
 
-    await tester.drag(
-      find.byKey(const ValueKey('word-card-vertical-gesture')),
+    await tester.dragFrom(
+      tester.getCenter(find.byKey(const ValueKey('rhythm-sheet-handle'))),
       const Offset(0, -96),
+      kind: PointerDeviceKind.mouse,
     );
     await tester.pumpAndSettle();
     final sheetScale = tester.widget<AnimatedScale>(
