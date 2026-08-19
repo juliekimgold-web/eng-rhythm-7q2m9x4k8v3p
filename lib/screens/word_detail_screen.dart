@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/pronunciation_controller.dart';
@@ -219,6 +220,9 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                           key: const ValueKey('rhythm-sheet-handle'),
                           behavior: HitTestBehavior.opaque,
                           onTap: () => unawaited(_openRhythmControls()),
+                          onVerticalDragStart: _onCardVerticalDragStart,
+                          onVerticalDragUpdate: _onCardVerticalDragUpdate,
+                          onVerticalDragEnd: _onCardVerticalDragEnd,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Column(
@@ -253,114 +257,119 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                             scale: 1 - 0.12 * sheetProgress,
                             duration: AppMotion.fast,
                             curve: Curves.easeOutCubic,
-                            child: PageView.builder(
-                              key: const ValueKey(
-                                'word-card-page-view',
-                              ),
-                              controller: _pageController,
-                              clipBehavior: Clip.none,
-                              physics: const PageScrollPhysics(),
-                              itemCount: words.length,
-                              onPageChanged: _onPageChanged,
-                              itemBuilder: (context, index) {
-                                final word = words[index];
-                                final current = index == _currentIndex;
-                                return AnimatedBuilder(
-                                  animation: _pageController,
-                                  builder: (context, child) {
-                                    final page = _pageController.hasClients &&
-                                            _pageController
-                                                .position.haveDimensions
-                                        ? _pageController.page ??
-                                            _currentIndex.toDouble()
-                                        : _currentIndex.toDouble();
-                                    final delta = index - page;
-                                    final distance =
-                                        delta.abs().clamp(0.0, 1.0);
-                                    final outgoing = _pageDirection > 0
-                                        ? delta < 0
-                                        : delta > 0;
-                                    final verticalOffset =
-                                        outgoing ? -24 * distance : 0.0;
-                                    final rotation = outgoing
-                                        ? (_pageDirection > 0
-                                                ? -0.011
-                                                : 0.011) *
-                                            distance
-                                        : 0.0;
-                                    final scale = outgoing
-                                        ? 1 - 0.006 * distance
-                                        : 1 - 0.01 * distance;
-                                    final opacity =
-                                        outgoing ? 1.0 : 1 - 0.035 * distance;
-                                    return Transform.translate(
-                                      key: ValueKey(
-                                        'swipe-transform-${word.id}',
-                                      ),
-                                      offset: Offset(0, verticalOffset),
-                                      child: Transform.rotate(
+                            child: ScrollConfiguration(
+                              behavior: const _CardPageScrollBehavior(),
+                              child: PageView.builder(
+                                key: const ValueKey(
+                                  'word-card-page-view',
+                                ),
+                                controller: _pageController,
+                                clipBehavior: Clip.none,
+                                physics: const PageScrollPhysics(),
+                                itemCount: words.length,
+                                onPageChanged: _onPageChanged,
+                                itemBuilder: (context, index) {
+                                  final word = words[index];
+                                  final current = index == _currentIndex;
+                                  return AnimatedBuilder(
+                                    animation: _pageController,
+                                    builder: (context, child) {
+                                      final page = _pageController.hasClients &&
+                                              _pageController
+                                                  .position.haveDimensions
+                                          ? _pageController.page ??
+                                              _currentIndex.toDouble()
+                                          : _currentIndex.toDouble();
+                                      final delta = index - page;
+                                      final distance =
+                                          delta.abs().clamp(0.0, 1.0);
+                                      final outgoing = _pageDirection > 0
+                                          ? delta < 0
+                                          : delta > 0;
+                                      final verticalOffset =
+                                          outgoing ? -24 * distance : 0.0;
+                                      final rotation = outgoing
+                                          ? (_pageDirection > 0
+                                                  ? -0.011
+                                                  : 0.011) *
+                                              distance
+                                          : 0.0;
+                                      final scale = outgoing
+                                          ? 1 - 0.006 * distance
+                                          : 1 - 0.01 * distance;
+                                      final opacity =
+                                          outgoing ? 1.0 : 1 - 0.035 * distance;
+                                      return Transform.translate(
                                         key: ValueKey(
-                                          'swipe-rotation-${word.id}',
+                                          'swipe-transform-${word.id}',
                                         ),
-                                        angle: rotation,
-                                        alignment: Alignment.bottomCenter,
-                                        child: Transform.scale(
-                                          scale: scale,
-                                          child: Opacity(
-                                            opacity: opacity,
-                                            child: child,
+                                        offset: Offset(0, verticalOffset),
+                                        child: Transform.rotate(
+                                          key: ValueKey(
+                                            'swipe-rotation-${word.id}',
+                                          ),
+                                          angle: rotation,
+                                          alignment: Alignment.bottomCenter,
+                                          child: Transform.scale(
+                                            scale: scale,
+                                            child: Opacity(
+                                              opacity: opacity,
+                                              child: child,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                  child: GestureDetector(
-                                    key: current
-                                        ? const ValueKey(
-                                            'word-card-vertical-gesture',
-                                          )
-                                        : null,
-                                    behavior: HitTestBehavior.translucent,
-                                    onVerticalDragStart: current
-                                        ? _onCardVerticalDragStart
-                                        : null,
-                                    onVerticalDragUpdate: current
-                                        ? _onCardVerticalDragUpdate
-                                        : null,
-                                    onVerticalDragEnd:
-                                        current ? _onCardVerticalDragEnd : null,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 8,
-                                      ),
-                                      child: WordRhythmCard(
-                                        word: word,
-                                        isCurrent: current,
-                                        playing:
-                                            current && _pronunciation.playing,
-                                        activeSyllable: current
-                                            ? _pronunciation.activeSyllable
-                                            : -1,
-                                        playbackProgress: current
-                                            ? _pronunciation.progress
-                                            : 0,
-                                        rhythmRevealed:
-                                            current && _rhythmRevealed,
-                                        flipped: current && _flipped,
-                                        onFlip: current
-                                            ? () => setState(
-                                                  () => _flipped = !_flipped,
-                                                )
-                                            : () {},
-                                        onPlay: current ? _playCurrent : () {},
-                                        onFavorite: () => widget.repository
-                                            .toggleFavorite(word.id),
+                                      );
+                                    },
+                                    child: GestureDetector(
+                                      key: current
+                                          ? const ValueKey(
+                                              'word-card-vertical-gesture',
+                                            )
+                                          : null,
+                                      behavior: HitTestBehavior.translucent,
+                                      onVerticalDragStart: current
+                                          ? _onCardVerticalDragStart
+                                          : null,
+                                      onVerticalDragUpdate: current
+                                          ? _onCardVerticalDragUpdate
+                                          : null,
+                                      onVerticalDragEnd: current
+                                          ? _onCardVerticalDragEnd
+                                          : null,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 8,
+                                        ),
+                                        child: WordRhythmCard(
+                                          word: word,
+                                          isCurrent: current,
+                                          playing:
+                                              current && _pronunciation.playing,
+                                          activeSyllable: current
+                                              ? _pronunciation.activeSyllable
+                                              : -1,
+                                          playbackProgress: current
+                                              ? _pronunciation.progress
+                                              : 0,
+                                          rhythmRevealed:
+                                              current && _rhythmRevealed,
+                                          flipped: current && _flipped,
+                                          onFlip: current
+                                              ? () => setState(
+                                                    () => _flipped = !_flipped,
+                                                  )
+                                              : () {},
+                                          onPlay:
+                                              current ? _playCurrent : () {},
+                                          onFavorite: () => widget.repository
+                                              .toggleFavorite(word.id),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              },
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         ),
@@ -375,6 +384,17 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
       },
     );
   }
+}
+
+class _CardPageScrollBehavior extends MaterialScrollBehavior {
+  const _CardPageScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        ...super.dragDevices,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      };
 }
 
 class _PinnedWordCardDelegate extends SliverPersistentHeaderDelegate {
