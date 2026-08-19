@@ -61,6 +61,10 @@ void main() {
     expect(find.text('라이브러리'), findsOneWidget);
     expect(find.text('스캔'), findsOneWidget);
     expect(find.text('마이'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('floating-navigation-dock')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('라이브러리'));
     await tester.pumpAndSettle();

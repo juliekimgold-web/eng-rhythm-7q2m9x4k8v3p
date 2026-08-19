@@ -141,13 +141,6 @@ class HomeScreen extends StatelessWidget {
                     onOpenLibrary: onOpenLibrary,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.section),
-                const _SectionTitle(
-                  title: '오늘의 작은 팁',
-                  caption: '한 번에 하나만 기억해도 충분해요.',
-                ),
-                const SizedBox(height: 12),
-                const _TipCard(),
               ],
             ),
           ),
@@ -295,14 +288,25 @@ class _Greeting extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'TODAY · $dateLabel',
-          style: const TextStyle(
-            color: AppColors.inkSoft,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.7,
-          ),
+        Row(
+          children: [
+            Text(
+              'TODAY · $dateLabel',
+              style: const TextStyle(
+                color: AppColors.inkSoft,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.7,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            const Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _DailyTipPill(),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 7),
         Text(
@@ -314,6 +318,54 @@ class _Greeting extends StatelessWidget {
               ),
         ),
       ],
+    );
+  }
+}
+
+class _DailyTipPill extends StatelessWidget {
+  const _DailyTipPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: '모음을 조금 더 길게 유지하면 영어 리듬이 훨씬 자연스러워져요.',
+      child: Semantics(
+        label: '오늘의 작은 팁. 강세는 크게보다 길고 선명하게.',
+        child: Container(
+          key: const ValueKey('home-daily-tip'),
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+          constraints: const BoxConstraints(maxWidth: 220),
+          decoration: BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.lightbulb_outline_rounded,
+                color: AppColors.orangeDark,
+                size: 14,
+              ),
+              SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  '오늘의 팁 · 강세는 길고 선명하게',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.orangeDark,
+                    fontSize: 11,
+                    height: 1.2,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -983,69 +1035,6 @@ class _RecentWordCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _TipCard extends StatelessWidget {
-  const _TipCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-      ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _TipIcon(),
-          SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '강세는 크게보다 길고 선명하게',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  '모음을 조금 더 길게 유지하면 영어 리듬이 훨씬 자연스러워져요.',
-                  style: TextStyle(
-                    color: AppColors.inkSoft,
-                    fontSize: 12,
-                    height: 1.55,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TipIcon extends StatelessWidget {
-  const _TipIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(
-        Icons.lightbulb_outline_rounded,
-        color: AppColors.orangeDark,
-        size: 20,
       ),
     );
   }
