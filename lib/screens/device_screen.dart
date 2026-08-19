@@ -201,10 +201,10 @@ class _DeviceDashboardCard extends StatelessWidget {
               key: const ValueKey('device-image-stage'),
               height: 156,
               color: AppColors.cream,
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: Image.asset(
-                'assets/images/eng_device.png',
-                fit: BoxFit.contain,
+                'assets/images/eng_device_complete.png',
+                fit: BoxFit.fitWidth,
                 alignment: Alignment.center,
                 filterQuality: FilterQuality.high,
                 semanticLabel: '주황색 ENG Rhythm Band 디바이스 전체 이미지',

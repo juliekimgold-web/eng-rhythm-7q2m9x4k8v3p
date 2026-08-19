@@ -21,6 +21,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/eng_device.png
+    - assets/images/eng_device_complete.png
   fonts:
     - family: Pretendard
       fonts:
