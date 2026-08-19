@@ -118,6 +118,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('eng-logo')), findsNothing);
     expect(find.text('ENG 디바이스와 연결하고 리듬 감각을 조절하세요.'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('device-journey-hero')),
+      findsOneWidget,
+    );
+    expect(find.text('ENG Rhythm Band'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('device-vibration-test')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('마이'));
     await tester.pumpAndSettle();
