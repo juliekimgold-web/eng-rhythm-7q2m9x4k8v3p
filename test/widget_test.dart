@@ -249,8 +249,9 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('lens-live-scan')), findsOneWidget);
     expect(find.text('스캔 중'), findsOneWidget);
+    expect(find.byKey(const ValueKey('lens-found-words-top')), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 4900));
+    await tester.pump(const Duration(milliseconds: 4000));
     final movingTop = tester
         .widget<Positioned>(find.byKey(const ValueKey('lens-scan-line')))
         .top!;
@@ -259,6 +260,12 @@ void main() {
         .widget<Positioned>(find.byKey(const ValueKey('lens-scan-line')))
         .top!;
     expect(pausedTop, greaterThan(movingTop));
+    final scanLineCenter =
+        tester.getCenter(find.byKey(const ValueKey('lens-scan-line'))).dy;
+    final everydayCenter = tester
+        .getCenter(find.byKey(const ValueKey('lens-highlight-everyday')))
+        .dy;
+    expect((scanLineCenter - everydayCenter).abs(), lessThan(8));
 
     await tester.pump(const Duration(milliseconds: 250));
     final heldTop = tester

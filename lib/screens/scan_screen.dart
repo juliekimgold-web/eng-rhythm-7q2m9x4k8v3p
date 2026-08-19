@@ -9,6 +9,12 @@ import '../repositories/word_repository.dart';
 
 enum LensStage { empty, importing, loaded, setup, ready, live }
 
+const _scanHitPositions = <String, double>{
+  'everyday': 0.23,
+  'really': 0.565,
+  'together': 0.73,
+};
+
 class ScanScreen extends StatefulWidget {
   const ScanScreen({
     super.key,
@@ -29,6 +35,12 @@ class _ScanScreenState extends State<ScanScreen>
   LensStage _stage = LensStage.empty;
   String _importSource = '';
   final Set<String> _deliveredWords = <String>{};
+  final GlobalKey _scanLineAnchorKey = GlobalKey();
+  final Map<String, GlobalKey> _wordHitKeys = {
+    'everyday': GlobalKey(),
+    'really': GlobalKey(),
+    'together': GlobalKey(),
+  };
   bool _scanComplete = false;
   bool _pausingForRhythm = false;
   String? _pausedWordId;
@@ -121,20 +133,36 @@ class _ScanScreenState extends State<ScanScreen>
 
   void _handleScanProgress() {
     if (_stage != LensStage.live || _pausingForRhythm) return;
-    const thresholds = <String, double>{
-      'everyday': 0.28,
-      'really': 0.49,
-      'together': 0.70,
-    };
     for (final word in _recognizedWords) {
-      final threshold = thresholds[word.id];
-      if (threshold == null || _scanController.value < threshold) continue;
+      if (!_hasScanLineReached(word.id)) continue;
       if (_deliveredWords.add(word.id)) {
         unawaited(_pauseAndDeliverRhythm(word));
         break;
       }
     }
     if (mounted) setState(() {});
+  }
+
+  bool _hasScanLineReached(String wordId) {
+    final lineBox =
+        _scanLineAnchorKey.currentContext?.findRenderObject() as RenderBox?;
+    final wordBox =
+        _wordHitKeys[wordId]?.currentContext?.findRenderObject() as RenderBox?;
+    if (lineBox != null && wordBox != null) {
+      final lineY = lineBox
+          .localToGlobal(
+            Offset(0, lineBox.size.height / 2),
+          )
+          .dy;
+      final wordY = wordBox
+          .localToGlobal(
+            Offset(0, wordBox.size.height / 2),
+          )
+          .dy;
+      return lineY >= wordY;
+    }
+    final fallback = _scanHitPositions[wordId];
+    return fallback != null && _scanController.value >= fallback;
   }
 
   Future<void> _pauseAndDeliverRhythm(RhythmWord word) async {
@@ -145,7 +173,6 @@ class _ScanScreenState extends State<ScanScreen>
       _pausedWordId = word.id;
     });
 
-    await Future<void>.delayed(const Duration(milliseconds: 120));
     await _deliverRhythm(word);
     await Future<void>.delayed(const Duration(milliseconds: 320));
 
@@ -179,15 +206,37 @@ class _ScanScreenState extends State<ScanScreen>
   String? get _activeWordId {
     if (_stage != LensStage.live || _scanComplete) return null;
     if (_pausedWordId != null) return _pausedWordId;
+    final lineBox =
+        _scanLineAnchorKey.currentContext?.findRenderObject() as RenderBox?;
+    if (lineBox != null) {
+      final lineY = lineBox
+          .localToGlobal(
+            Offset(0, lineBox.size.height / 2),
+          )
+          .dy;
+      String? nearest;
+      var distance = double.infinity;
+      for (final entry in _wordHitKeys.entries) {
+        final wordBox =
+            entry.value.currentContext?.findRenderObject() as RenderBox?;
+        if (wordBox == null) continue;
+        final wordY = wordBox
+            .localToGlobal(
+              Offset(0, wordBox.size.height / 2),
+            )
+            .dy;
+        final current = (lineY - wordY).abs();
+        if (current < distance) {
+          distance = current;
+          nearest = entry.key;
+        }
+      }
+      if (distance <= 42) return nearest;
+    }
     final progress = _scanController.value;
-    const positions = <String, double>{
-      'everyday': 0.28,
-      'really': 0.49,
-      'together': 0.70,
-    };
     String? nearest;
     var distance = 1.0;
-    for (final entry in positions.entries) {
+    for (final entry in _scanHitPositions.entries) {
       final current = (progress - entry.value).abs();
       if (current < distance) {
         distance = current;
@@ -234,6 +283,8 @@ class _ScanScreenState extends State<ScanScreen>
           recognizedWords: _recognizedWords,
           progress: 0,
           activeWordId: null,
+          wordHitKeys: _wordHitKeys,
+          scanLineAnchorKey: _scanLineAnchorKey,
           onPrimary: _showDeviceSetup,
         ),
       LensStage.setup => Stack(
@@ -243,6 +294,8 @@ class _ScanScreenState extends State<ScanScreen>
               recognizedWords: _recognizedWords,
               progress: 0,
               activeWordId: null,
+              wordHitKeys: _wordHitKeys,
+              scanLineAnchorKey: _scanLineAnchorKey,
               onPrimary: _showDeviceSetup,
             ),
             Positioned.fill(child: _DeviceSetupOverlay(onReady: _markReady)),
@@ -254,6 +307,8 @@ class _ScanScreenState extends State<ScanScreen>
           recognizedWords: _recognizedWords,
           progress: 0,
           activeWordId: null,
+          wordHitKeys: _wordHitKeys,
+          scanLineAnchorKey: _scanLineAnchorKey,
           onPrimary: _startLiveScan,
         ),
       LensStage.live => _DocumentStage(
@@ -262,6 +317,8 @@ class _ScanScreenState extends State<ScanScreen>
           recognizedWords: _recognizedWords,
           progress: _scanController.value,
           activeWordId: _activeWordId,
+          wordHitKeys: _wordHitKeys,
+          scanLineAnchorKey: _scanLineAnchorKey,
           scanComplete: _scanComplete,
           onPrimary: _startLiveScan,
         ),
@@ -539,6 +596,8 @@ class _DocumentStage extends StatelessWidget {
     required this.recognizedWords,
     required this.progress,
     required this.activeWordId,
+    required this.wordHitKeys,
+    required this.scanLineAnchorKey,
     required this.onPrimary,
     this.scanComplete = false,
   });
@@ -547,6 +606,8 @@ class _DocumentStage extends StatelessWidget {
   final List<RhythmWord> recognizedWords;
   final double progress;
   final String? activeWordId;
+  final Map<String, GlobalKey> wordHitKeys;
+  final GlobalKey scanLineAnchorKey;
   final VoidCallback onPrimary;
   final bool scanComplete;
 
@@ -570,6 +631,11 @@ class _DocumentStage extends StatelessWidget {
             child: _StatusLabel(text: status.$1, color: status.$2),
           ),
         ),
+        _FoundWordsPanel(
+          words: recognizedWords,
+          activeWordId: activeWordId,
+        ),
+        const SizedBox(height: 10),
         Expanded(
           child: Stack(
             children: [
@@ -582,22 +648,10 @@ class _DocumentStage extends StatelessWidget {
                       stage: stage,
                       progress: progress,
                       recognizedWords: recognizedWords,
+                      wordHitKeys: wordHitKeys,
                     ),
                     if (!_live) ...[
                       const SizedBox(height: 22),
-                      Text(
-                        '발견한 단어',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: recognizedWords
-                            .map((word) => _WordKeyword(word: word))
-                            .toList(growable: false),
-                      ),
-                      const SizedBox(height: 24),
                       FilledButton(
                         key: ValueKey(
                           stage == LensStage.ready
@@ -621,6 +675,7 @@ class _DocumentStage extends StatelessWidget {
                   right: 20,
                   top: 8 + (progress * 560),
                   child: _ScanPositionLine(
+                    key: scanLineAnchorKey,
                     activeWord: activeWordId,
                     complete: scanComplete,
                   ),
@@ -648,11 +703,13 @@ class _ReadableDocument extends StatelessWidget {
     required this.stage,
     required this.progress,
     required this.recognizedWords,
+    required this.wordHitKeys,
   });
 
   final LensStage stage;
   final double progress;
   final List<RhythmWord> recognizedWords;
+  final Map<String, GlobalKey> wordHitKeys;
 
   Color _wordColor(String id) =>
       recognizedWords.firstWhere((word) => word.id == id).color;
@@ -667,28 +724,32 @@ class _ReadableDocument extends StatelessWidget {
   }
 
   InlineSpan _hit(String text, String id, double position) {
+    final highlight = AnimatedContainer(
+      key: ValueKey('lens-highlight-$id'),
+      duration: const Duration(milliseconds: 160),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: _wordColor(id).withValues(
+          alpha: _highlightAlpha(id, position),
+        ),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: AppColors.ink,
+          fontSize: 18,
+          height: 1.35,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
     return WidgetSpan(
       alignment: PlaceholderAlignment.baseline,
       baseline: TextBaseline.alphabetic,
-      child: AnimatedContainer(
-        key: ValueKey('lens-highlight-$id'),
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-        decoration: BoxDecoration(
-          color: _wordColor(id).withValues(
-            alpha: _highlightAlpha(id, position),
-          ),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: AppColors.ink,
-            fontSize: 18,
-            height: 1.35,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+      child: KeyedSubtree(
+        key: wordHitKeys[id],
+        child: highlight,
       ),
     );
   }
@@ -728,17 +789,17 @@ class _ReadableDocument extends StatelessWidget {
                 style: textStyle,
                 children: [
                   const TextSpan(text: 'We speak '),
-                  _hit('everyday', 'everyday', 0.28),
+                  _hit('everyday', 'everyday', _scanHitPositions['everyday']!),
                   const TextSpan(
                     text:
                         ', but we do not always listen to the patterns around us. A familiar sound can ',
                   ),
-                  _hit('really', 'really', 0.49),
+                  _hit('really', 'really', _scanHitPositions['really']!),
                   const TextSpan(
                     text:
                         ' change how a word feels. When sound and movement work ',
                   ),
-                  _hit('together', 'together', 0.70),
+                  _hit('together', 'together', _scanHitPositions['together']!),
                   const TextSpan(
                     text: ', a new rhythm becomes easier to remember.\n\n',
                   ),
@@ -756,18 +817,76 @@ class _ReadableDocument extends StatelessWidget {
   }
 }
 
+class _FoundWordsPanel extends StatelessWidget {
+  const _FoundWordsPanel({
+    required this.words,
+    required this.activeWordId,
+  });
+
+  final List<RhythmWord> words;
+  final String? activeWordId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      key: const ValueKey('lens-found-words-top'),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                '발견한 단어',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const Spacer(),
+              Text(
+                '${words.length}개',
+                style: const TextStyle(
+                  color: AppColors.inkSoft,
+                  fontSize: AppTypeScale.caption,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          SizedBox(
+            height: AppControlSize.compactVisualHeight,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: words.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final word = words[index];
+                return _WordKeyword(
+                  word: word,
+                  active: word.id == activeWordId,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _WordKeyword extends StatelessWidget {
-  const _WordKeyword({required this.word});
+  const _WordKeyword({required this.word, this.active = false});
 
   final RhythmWord word;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: word.color.withValues(alpha: 0.23),
+        color: word.color.withValues(alpha: active ? 0.32 : 0.16),
         borderRadius: BorderRadius.circular(AppRadii.small),
+        border: active ? Border.all(color: word.color, width: 1.5) : null,
       ),
       child: Text(
         word.word.toLowerCase(),
@@ -1014,7 +1133,11 @@ class _DeviceAttachPainter extends CustomPainter {
 }
 
 class _ScanPositionLine extends StatelessWidget {
-  const _ScanPositionLine({required this.activeWord, required this.complete});
+  const _ScanPositionLine({
+    super.key,
+    required this.activeWord,
+    required this.complete,
+  });
 
   final String? activeWord;
   final bool complete;
