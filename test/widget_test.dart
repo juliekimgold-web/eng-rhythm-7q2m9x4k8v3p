@@ -117,14 +117,20 @@ void main() {
     await tester.tap(find.text('연동'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('eng-logo')), findsNothing);
-    expect(find.text('ENG 디바이스와 연결하고 리듬 감각을 조절하세요.'), findsOneWidget);
+    expect(find.text('연결 상태와 주요 설정을 한눈에 확인해요.'), findsOneWidget);
     expect(
-      find.byKey(const ValueKey('device-journey-hero')),
+      find.byKey(const ValueKey('device-dashboard-card')),
       findsOneWidget,
     );
-    expect(find.text('ENG Rhythm Band'), findsOneWidget);
+    expect(find.text('ENG Rhythm Band 연결됨'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('device-quick-settings')),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(
-      find.byKey(const ValueKey('device-vibration-test')),
+      find.byKey(const ValueKey('device-quick-settings')),
       findsOneWidget,
     );
 
