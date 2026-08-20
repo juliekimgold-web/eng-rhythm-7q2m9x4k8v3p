@@ -610,13 +610,18 @@ class _RhythmAttachmentGuideScreen extends StatelessWidget {
                   const Spacer(flex: 2),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 28),
-                    child: Image.asset(
-                      'assets/images/rhythm_attach_guide.png',
-                      key: const ValueKey('rhythm-attachment-image'),
-                      width: double.infinity,
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high,
-                      semanticLabel: '핸드폰 뒷면에 ENG 디바이스를 부착하는 방법',
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 360),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: Image.asset(
+                          'assets/images/rhythm_attach_guide.png',
+                          key: const ValueKey('rhythm-attachment-image'),
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                          semanticLabel: '핸드폰 뒷면에 ENG 디바이스를 부착하는 방법',
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
