@@ -236,16 +236,18 @@ void main() {
     await tester.ensureVisible(find.byKey(const ValueKey('lens-open-setup')));
     await tester.tap(find.byKey(const ValueKey('lens-open-setup')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('lens-device-setup')), findsOneWidget);
-    expect(find.textContaining('손으로 잡고'), findsOneWidget);
-    expect(find.textContaining('부착'), findsNothing);
-
-    await tester.tap(find.byKey(const ValueKey('lens-ready-button')));
-    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('lens-scan-ready')), findsOneWidget);
+    expect(find.byKey(const ValueKey('lens-device-setup')), findsNothing);
 
     await tester.ensureVisible(find.byKey(const ValueKey('lens-start-live')));
     await tester.tap(find.byKey(const ValueKey('lens-start-live')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('lens-device-setup')), findsOneWidget);
+    expect(find.textContaining('손으로 잡고'), findsOneWidget);
+    expect(find.textContaining('부착'), findsNothing);
+    expect(find.byKey(const ValueKey('lens-live-scan')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('lens-ready-button')));
     await tester.pump();
     expect(find.byKey(const ValueKey('lens-live-scan')), findsOneWidget);
     expect(find.text('스캔 중'), findsOneWidget);
@@ -366,6 +368,28 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1700));
     await tester.pump();
     expect(find.text('새 리듬을 찾았어요!'), findsOneWidget);
+
+    final resultSoundPattern = tester.widget<SoundLengthPattern>(
+      find.byKey(const ValueKey('capture-result-sound-pattern')),
+    );
+    final resultSyllablePattern = tester.widget<SoundLengthPattern>(
+      find.byKey(const ValueKey('capture-result-syllable-pattern')),
+    );
+    expect(resultSoundPattern.color, sampleWords.first.color);
+    expect(resultSyllablePattern.color, sampleWords.first.color);
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('capture-device-rhythm')),
+    );
+    await tester.tap(find.byKey(const ValueKey('capture-device-rhythm')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('rhythm-attachment-guide')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rhythm-attachment-image')), findsOneWidget);
+    expect(find.text('리듬 변환'), findsOneWidget);
+    expect(
+      find.text('핸드폰 뒷면에 디바이스를 부착해주세요'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('word playback highlights syllables in sequence', (tester) async {

@@ -141,9 +141,9 @@ class _ReadyState extends StatelessWidget {
                       width: 148,
                       height: 92,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2B2724),
+                        color: AppColors.cream,
                         borderRadius: BorderRadius.circular(46),
-                        border: Border.all(color: AppColors.orange, width: 4),
+                        border: Border.all(color: AppColors.peach, width: 2),
                       ),
                       child: const Icon(
                         Icons.graphic_eq_rounded,
@@ -167,7 +167,12 @@ class _ReadyState extends StatelessWidget {
                 ),
                 const Spacer(),
                 FilledButton.icon(
+                  key: const ValueKey('capture-start-button'),
                   onPressed: onStart,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.orange,
+                    foregroundColor: AppColors.ink,
+                  ),
                   icon: const Icon(Icons.graphic_eq_rounded),
                   label: const Text('소리 감지 시작'),
                 ),
@@ -471,8 +476,9 @@ class _ResultState extends StatelessWidget {
               const Text('세탁기 회전음에서 발견한 길이 패턴'),
               const SizedBox(height: 24),
               SoundLengthPattern(
+                key: const ValueKey('capture-result-sound-pattern'),
                 lengths: result.soundPattern,
-                color: const Color(0xFFD3A500),
+                color: result.color,
                 height: 14,
                 gap: 7,
               ),
@@ -486,8 +492,9 @@ class _ResultState extends StatelessWidget {
               Text('${result.phonetic}  ·  ${result.meaning}'),
               const SizedBox(height: 22),
               SoundLengthPattern(
+                key: const ValueKey('capture-result-syllable-pattern'),
                 lengths: result.syllableDurations,
-                color: const Color(0xFFD3A500),
+                color: result.color,
                 height: 10,
                 gap: 8,
               ),
@@ -516,7 +523,16 @@ class _ResultState extends StatelessWidget {
                   ),
                 ),
                 IconButton.filled(
-                  onPressed: () {},
+                  key: const ValueKey('capture-device-rhythm'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const _RhythmAttachmentGuideScreen(),
+                    ),
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: result.color.withValues(alpha: 0.42),
+                    foregroundColor: AppColors.ink,
+                  ),
                   icon: const Icon(Icons.play_arrow_rounded),
                 ),
               ],
@@ -525,6 +541,7 @@ class _ResultState extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         FilledButton(
+          key: const ValueKey('capture-save-button'),
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => WordDetailScreen(
@@ -533,11 +550,93 @@ class _ResultState extends StatelessWidget {
               ),
             ),
           ),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.orange,
+            foregroundColor: AppColors.ink,
+          ),
           child: const Text('라이브러리에 저장하고 자세히 보기'),
         ),
         const SizedBox(height: 10),
         TextButton(onPressed: onReset, child: const Text('다른 소리 수집하기')),
       ],
+    );
+  }
+}
+
+class _RhythmAttachmentGuideScreen extends StatelessWidget {
+  const _RhythmAttachmentGuideScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: const ValueKey('rhythm-attachment-guide'),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 64,
+              child: Row(
+                children: [
+                  IconButton(
+                    key: const ValueKey('rhythm-guide-back'),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: '뒤로가기',
+                    icon: const Icon(Icons.arrow_back_rounded),
+                  ),
+                  Expanded(
+                    child: Text(
+                      '리듬 변환',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    tooltip: '알림',
+                    icon: const Icon(Icons.notifications_none_rounded),
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    tooltip: '설정',
+                    icon: const Icon(Icons.settings_outlined),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  const Spacer(flex: 2),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Image.asset(
+                      'assets/images/rhythm_attach_guide.png',
+                      key: const ValueKey('rhythm-attachment-image'),
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                      semanticLabel: '핸드폰 뒷면에 ENG 디바이스를 부착하는 방법',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '핸드폰 뒷면에 디바이스를 부착해주세요',
+                    key: ValueKey('rhythm-attachment-instruction'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.ink,
+                      fontSize: AppTypeScale.caption,
+                      height: 1.5,
+                    ),
+                  ),
+                  const Spacer(flex: 3),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

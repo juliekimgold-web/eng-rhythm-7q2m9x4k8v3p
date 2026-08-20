@@ -22,6 +22,7 @@ flutter:
   assets:
     - assets/images/eng_device.png
     - assets/images/eng_device_complete.png
+    - assets/images/rhythm_attach_guide.png
   fonts:
     - family: Pretendard
       fonts:

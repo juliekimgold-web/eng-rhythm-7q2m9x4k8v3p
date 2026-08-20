@@ -126,6 +126,8 @@ class _ScanScreenState extends State<ScanScreen>
   void _handleBack() {
     if (_stage == LensStage.live) {
       _exitLiveScan();
+    } else if (_stage == LensStage.setup) {
+      _markReady();
     } else if (_stage != LensStage.empty) {
       _reset();
     }
@@ -285,12 +287,12 @@ class _ScanScreenState extends State<ScanScreen>
           activeWordId: null,
           wordHitKeys: _wordHitKeys,
           scanLineAnchorKey: _scanLineAnchorKey,
-          onPrimary: _showDeviceSetup,
+          onPrimary: _markReady,
         ),
       LensStage.setup => Stack(
           children: [
             _DocumentStage(
-              stage: LensStage.loaded,
+              stage: LensStage.ready,
               recognizedWords: _recognizedWords,
               progress: 0,
               activeWordId: null,
@@ -298,7 +300,7 @@ class _ScanScreenState extends State<ScanScreen>
               scanLineAnchorKey: _scanLineAnchorKey,
               onPrimary: _showDeviceSetup,
             ),
-            Positioned.fill(child: _DeviceSetupOverlay(onReady: _markReady)),
+            Positioned.fill(child: _DeviceSetupOverlay(onReady: _startLiveScan)),
           ],
         ),
       LensStage.ready => _DocumentStage(
@@ -309,7 +311,7 @@ class _ScanScreenState extends State<ScanScreen>
           activeWordId: null,
           wordHitKeys: _wordHitKeys,
           scanLineAnchorKey: _scanLineAnchorKey,
-          onPrimary: _startLiveScan,
+          onPrimary: _showDeviceSetup,
         ),
       LensStage.live => _DocumentStage(
           key: const ValueKey('lens-live-scan'),
